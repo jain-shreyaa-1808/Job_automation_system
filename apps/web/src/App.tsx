@@ -1,18 +1,33 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
+import { useAuth } from "./context/AuthContext";
 import { AppShell } from "./components/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HROutreachPage } from "./pages/HROutreachPage";
 import { JobDetailsPage } from "./pages/JobDetailsPage";
 import { JobListingsPage } from "./pages/JobListingsPage";
+import { LoginPage } from "./pages/LoginPage";
 import { ResumeOptimizerPage } from "./pages/ResumeOptimizerPage";
 import { ResumeUploadPage } from "./pages/ResumeUploadPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route element={<AppShell />}>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppShell />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/" element={<DashboardPage />} />
         <Route path="/jobs" element={<JobListingsPage />} />
         <Route path="/jobs/:jobId" element={<JobDetailsPage />} />

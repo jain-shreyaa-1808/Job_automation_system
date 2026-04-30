@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  autoApply,
   fetchDashboard,
   fetchJobs,
   generateOutreach,
@@ -57,5 +58,16 @@ export function useUpdateSettings() {
 export function useParseResume() {
   return useMutation({
     mutationFn: parseResume,
+  });
+}
+
+export function useAutoApply() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: autoApply,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }

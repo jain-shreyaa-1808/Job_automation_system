@@ -1,7 +1,7 @@
 import { JobApplicationModel } from "../models/JobApplication.js";
 import { JobModel } from "../models/Job.js";
+import { env } from "../config/env.js";
 import { AppError } from "../utils/app-error.js";
-import { JOB_QUEUE_NAMES, QueueService } from "./queue.service.js";
 
 type AutoApplyInput = {
   userId: string;
@@ -10,8 +10,6 @@ type AutoApplyInput = {
 };
 
 export class AutoApplyService {
-  constructor(private readonly queueService = new QueueService()) {}
-
   async requestApplication(input: AutoApplyInput) {
     const job = await JobModel.findOne({
       _id: input.jobId,
@@ -34,7 +32,7 @@ export class AutoApplyService {
               : "Application queued",
             details: input.manualOverride
               ? "User opted to review before automation."
-              : "Queued for Puppeteer auto-apply worker.",
+              : "Queued for auto-apply worker.",
           },
         },
       },
@@ -46,12 +44,14 @@ export class AutoApplyService {
       { status: input.manualOverride ? "in-progress" : "applied" },
     );
 
-    if (!input.manualOverride) {
-      await this.queueService.enqueue(JOB_QUEUE_NAMES.autoApply, {
+    // Queue for background worker only if Redis is configured
+    if (!input.manualOverride && env.REDIS_URL) {
+      const { QueueService, JOB_QUEUE_NAMES } =
+        await import("./queue.service.js");
+      const queueService = new QueueService();
+      await queueService.enqueue(JOB_QUEUE_NAMES.autoApply, {
         userId: input.userId,
         jobId: input.jobId,
-        rateLimitPerMinute: 8,
-        captchaFallback: "manual-review",
       });
     }
 

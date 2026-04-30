@@ -2,170 +2,84 @@ import axios from "axios";
 
 import type { DashboardResponse, Job } from "../types/app";
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api/v1",
 });
 
-const fallbackJobs: Job[] = [
-  {
-    _id: "job-1",
-    title: "Software Engineer I",
-    company: "Acme Cloud",
-    description:
-      "Build product features using React, Node.js, MongoDB, and CI/CD pipelines.",
-    link: "https://careers.example.com/jobs/software-engineer-i",
-    platform: "Direct Careers",
-    location: "Bengaluru",
-    relevanceScore: 86,
-    matchedSkills: ["react", "node.js", "mongodb"],
-    missingSkills: ["docker"],
-    status: "new",
-  },
-  {
-    _id: "job-2",
-    title: "Wireless TAC Engineer",
-    company: "NetWave Systems",
-    description:
-      "Troubleshoot enterprise wireless incidents, logs, Cisco gear, and customer escalations.",
-    link: "https://jobs.example.com/netwave/wireless-tac-engineer",
-    platform: "Foundit",
-    location: "Remote",
-    relevanceScore: 79,
-    matchedSkills: ["networking", "wireless", "cisco"],
-    missingSkills: ["linux"],
-    status: "in-progress",
-  },
-];
+// Attach token to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-const fallbackDashboard: DashboardResponse = {
-  tabs: {
-    newJobs: [fallbackJobs[0]],
-    applied: [],
-    inProgress: [fallbackJobs[1]],
-    finished: [],
-    bookmarked: [],
+// On 401, force re-login
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
   },
-  recruiterLeads: [
-    {
-      _id: "lead-1",
-      name: "Acme Cloud Recruiting Team",
-      title: "Talent Acquisition",
-      company: "Acme Cloud",
-      state: "pending",
-      recentPosts: [
-        "Hiring graduate engineers for cloud platform teams.",
-        "Looking for candidates who can communicate clearly under pressure.",
-      ],
-    },
-  ],
-  resumeScore: 84,
-  skillGapRoadmap: ["docker", "linux", "incident response"],
-  interviewQuestions: [
-    "How would you debug a flaky wireless connection in production?",
-    "What tradeoffs would you consider in a Node.js API that serves thousands of requests per minute?",
-  ],
-};
-
-function withFallback<T>(promise: Promise<T>, fallback: T) {
-  return promise.catch(() => fallback);
-}
+);
 
 export async function fetchDashboard() {
-  const response = await withFallback(
-    api.get<DashboardResponse>("/dashboard"),
-    { data: fallbackDashboard } as { data: DashboardResponse },
-  );
-  return response.data;
+  const res = await api.get<DashboardResponse>("/dashboard");
+  return res.data;
 }
 
 export async function fetchJobs(status?: string) {
-  const response = await withFallback(
-    api.get<{ jobs: Job[] }>("/jobs", {
-      params: status ? { status } : undefined,
-    }),
-    { data: { jobs: fallbackJobs } } as { data: { jobs: Job[] } },
-  );
-  return response.data.jobs;
+  const res = await api.get<{ jobs: Job[] }>("/jobs", {
+    params: status ? { status } : undefined,
+  });
+  return res.data.jobs;
 }
 
 export async function triggerJobFetch() {
-  const response = await withFallback(
-    api.post<{ jobs: Job[] }>("/jobs/fetch"),
-    { data: { jobs: fallbackJobs } } as { data: { jobs: Job[] } },
-  );
-  return response.data.jobs;
+  const res = await api.post<{ jobs: Job[] }>("/jobs/fetch");
+  return res.data.jobs;
 }
 
 export async function generateResume(jobId: string) {
-  const response = await withFallback(
-    api.post<{ latex: string; atsSuggestions: string[]; downloadUrl: string }>(
-      "/resume/generate",
-      { jobId },
-    ),
-    {
-      data: {
-        latex:
-          "\\documentclass{article}\\begin{document}Sample Resume\\end{document}",
-        atsSuggestions: [
-          "Mirror the job title in your summary.",
-          "Quantify your top project outcome.",
-        ],
-        downloadUrl: "/generated/sample.pdf",
-      },
-    } as {
-      data: { latex: string; atsSuggestions: string[]; downloadUrl: string };
-    },
-  );
-  return response.data;
+  const res = await api.post<{
+    latex: string;
+    atsSuggestions: string[];
+    downloadUrl: string;
+  }>("/resume/generate", { jobId });
+  return res.data;
 }
 
 export async function generateOutreach(jobId: string) {
-  const response = await withFallback(
-    api.post<{ email: string; linkedinMessage: string }>("/outreach/generate", {
-      jobId,
-    }),
-    {
-      data: {
-        email:
-          "Subject: Interest in the role\n\nHi Hiring Team,\nI would love to discuss the opportunity.",
-        linkedinMessage:
-          "Hi, I am interested in the role and would value a connection.",
-      },
-    } as { data: { email: string; linkedinMessage: string } },
+  const res = await api.post<{ email: string; linkedinMessage: string }>(
+    "/outreach/generate",
+    { jobId },
   );
-  return response.data;
+  return res.data;
 }
 
 export async function updateSettings(payload: Record<string, unknown>) {
-  const response = await withFallback(
-    api.put<{ user: Record<string, unknown> }>("/settings", payload),
-    { data: { user: payload } } as { data: { user: Record<string, unknown> } },
+  const res = await api.put<{ user: Record<string, unknown> }>(
+    "/settings",
+    payload,
   );
-  return response.data.user;
+  return res.data.user;
 }
 
 export async function parseResume(file: File) {
   const formData = new FormData();
   formData.append("resume", file);
+  const res = await api.post("/parse-resume", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
 
-  const response = await withFallback(
-    api.post("/parse-resume", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }),
-    {
-      data: {
-        name: "Aarav Sharma",
-        skills: ["react", "typescript", "node.js", "networking"],
-        projects: [],
-        experience: [],
-        education: [],
-        certifications: [],
-        parsedText: "Sample parsed text",
-      },
-    } as { data: Record<string, unknown> },
-  );
-
-  return response.data;
+export async function autoApply(jobId: string) {
+  const res = await api.post("/apply/job", { jobId });
+  return res.data;
 }

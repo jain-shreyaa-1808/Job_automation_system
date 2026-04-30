@@ -4,11 +4,14 @@ import {
   BriefcaseBusiness,
   FileSpreadsheet,
   LayoutDashboard,
+  LogOut,
   Mail,
   Settings,
   Sparkles,
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
+
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -20,6 +23,8 @@ const navItems = [
 ];
 
 export function AppShell() {
+  const { logout, user } = useAuth();
+
   return (
     <div className="min-h-screen px-4 py-5 md:px-8">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[280px_1fr]">
@@ -65,6 +70,20 @@ export function AppShell() {
               );
             })}
           </nav>
+
+          <div className="mt-6 border-t border-white/10 pt-4">
+            <p className="mb-2 truncate px-4 text-xs text-white/50">
+              {user?.email}
+            </p>
+            <button
+              type="button"
+              onClick={logout}
+              className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </button>
+          </div>
         </aside>
 
         <main>

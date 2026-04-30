@@ -9,6 +9,10 @@ let connection:
   | undefined;
 
 export function getRedisConnection() {
+  if (!env.REDIS_URL) {
+    throw new Error("REDIS_URL is not configured");
+  }
+
   if (!connection) {
     const parsed = new URL(env.REDIS_URL);
     connection = {
