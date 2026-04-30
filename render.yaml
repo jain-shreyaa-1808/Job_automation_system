@@ -4,6 +4,7 @@ services:
     name: jobpilot-api
     runtime: node
     plan: free
+    nodeVersion: "20.18.0"
     buildCommand: npm install && npm run build --workspace @job-automation/api
     startCommand: node apps/api/dist/server.js
     envVars:
@@ -24,6 +25,7 @@ services:
   - type: web
     name: jobpilot-web
     runtime: static
+    nodeVersion: "20.18.0"
     buildCommand: npm install && npm run build --workspace @job-automation/web
     staticPublishPath: apps/web/dist
     envVars:
