@@ -121,8 +121,10 @@ export class ResumeParserService {
                     projects.push({
                         name: currentProject.name,
                         summary: currentProject.bullets.join(" "),
-                        technologies: skills.filter((s) => currentProject.name.toLowerCase().includes(s) ||
-                            currentProject.bullets.some((b) => b.toLowerCase().includes(s))).slice(0, 6),
+                        technologies: skills
+                            .filter((s) => currentProject.name.toLowerCase().includes(s) ||
+                            currentProject.bullets.some((b) => b.toLowerCase().includes(s)))
+                            .slice(0, 6),
                     });
                 }
                 currentProject = { name: line.split("|")[0].trim(), bullets: [] };
@@ -135,8 +137,10 @@ export class ResumeParserService {
             projects.push({
                 name: currentProject.name,
                 summary: currentProject.bullets.join(" "),
-                technologies: skills.filter((s) => currentProject.name.toLowerCase().includes(s) ||
-                    currentProject.bullets.some((b) => b.toLowerCase().includes(s))).slice(0, 6),
+                technologies: skills
+                    .filter((s) => currentProject.name.toLowerCase().includes(s) ||
+                    currentProject.bullets.some((b) => b.toLowerCase().includes(s)))
+                    .slice(0, 6),
             });
         }
         // Fallback to old method if nothing found
@@ -174,7 +178,9 @@ export class ResumeParserService {
                     bullets: [],
                 };
             }
-            else if (/engineer|intern|developer|consultant|manager/i.test(line) && current && !current.title) {
+            else if (/engineer|intern|developer|consultant|manager/i.test(line) &&
+                current &&
+                !current.title) {
                 current.title = line;
             }
             else if (/^[–\-•]/.test(line) && current) {
@@ -214,7 +220,8 @@ export class ResumeParserService {
                     endDate: dateMatch?.[2] ?? "",
                 });
             }
-            else if (/\b(B\.?S\.?c|M\.?C\.?A|B\.?E|B\.?Tech|M\.?Tech|B\.?Sc|M\.?Sc|GPA|degree)/i.test(line) && educations.length > 0) {
+            else if (/\b(B\.?S\.?c|M\.?C\.?A|B\.?E|B\.?Tech|M\.?Tech|B\.?Sc|M\.?Sc|GPA|degree)/i.test(line) &&
+                educations.length > 0) {
                 educations[educations.length - 1].degree = line;
             }
         }

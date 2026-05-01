@@ -6,8 +6,8 @@ import { api } from "../lib/api";
 
 export function SettingsPage() {
   const [form, setForm] = useState({
-    currentCtc: 0,
-    expectedCtc: 0,
+    currentCtc: "",
+    expectedCtc: "",
     preferredRoles: "",
     preferredLocations: "",
     autoApplyEnabled: false,
@@ -19,8 +19,8 @@ export function SettingsPage() {
     api.get("/auth/me").then((res) => {
       const u = res.data.user;
       setForm({
-        currentCtc: u.currentCtc ?? 0,
-        expectedCtc: u.expectedCtc ?? 0,
+        currentCtc: u.currentCtc ? String(u.currentCtc) : "",
+        expectedCtc: u.expectedCtc ? String(u.expectedCtc) : "",
         preferredRoles: (u.preferredRoles ?? []).join(", "),
         preferredLocations: (u.preferredLocations ?? []).join(", "),
         autoApplyEnabled: u.autoApplyEnabled ?? false,
@@ -42,8 +42,8 @@ export function SettingsPage() {
         onSubmit={(event) => {
           event.preventDefault();
           updateSettings.mutate({
-            currentCtc: form.currentCtc,
-            expectedCtc: form.expectedCtc,
+            currentCtc: form.currentCtc ? Number(form.currentCtc) : 0,
+            expectedCtc: form.expectedCtc ? Number(form.expectedCtc) : 0,
             preferredRoles: form.preferredRoles
               .split(",")
               .map((value) => value.trim())
@@ -62,12 +62,14 @@ export function SettingsPage() {
           </span>
           <input
             className="input"
-            type="number"
+            type="text"
+            inputMode="numeric"
+            placeholder="e.g. 800000"
             value={form.currentCtc}
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
-                currentCtc: Number(event.target.value),
+                currentCtc: event.target.value.replace(/[^0-9]/g, ""),
               }))
             }
           />
@@ -78,12 +80,14 @@ export function SettingsPage() {
           </span>
           <input
             className="input"
-            type="number"
+            type="text"
+            inputMode="numeric"
+            placeholder="e.g. 1200000"
             value={form.expectedCtc}
             onChange={(event) =>
               setForm((current) => ({
                 ...current,
-                expectedCtc: Number(event.target.value),
+                expectedCtc: event.target.value.replace(/[^0-9]/g, ""),
               }))
             }
           />
@@ -94,6 +98,7 @@ export function SettingsPage() {
           </span>
           <input
             className="input"
+            placeholder="e.g. Frontend Developer, Full Stack Engineer"
             value={form.preferredRoles}
             onChange={(event) =>
               setForm((current) => ({
@@ -102,6 +107,9 @@ export function SettingsPage() {
               }))
             }
           />
+          <span className="mt-1 block text-xs text-ink/40">
+            Comma-separated
+          </span>
         </label>
         <label>
           <span className="mb-2 block text-sm font-semibold text-ink/70">
@@ -109,6 +117,7 @@ export function SettingsPage() {
           </span>
           <input
             className="input"
+            placeholder="e.g. Bangalore, Remote, Hyderabad"
             value={form.preferredLocations}
             onChange={(event) =>
               setForm((current) => ({
@@ -117,6 +126,9 @@ export function SettingsPage() {
               }))
             }
           />
+          <span className="mt-1 block text-xs text-ink/40">
+            Comma-separated
+          </span>
         </label>
         <label className="flex items-center gap-3 md:col-span-2">
           <input
@@ -133,10 +145,17 @@ export function SettingsPage() {
             Enable auto-apply after manual review rules are satisfied.
           </span>
         </label>
-        <div className="md:col-span-2">
-          <button type="submit" className="button-primary">
-            Save Settings
+        <div className="md:col-span-2 flex items-center gap-4">
+          <button
+            type="submit"
+            className="button-primary"
+            disabled={updateSettings.isPending}
+          >
+            {updateSettings.isPending ? "Saving…" : "Save Settings"}
           </button>
+          {updateSettings.isSuccess && (
+            <span className="text-sm font-medium text-moss">✓ Saved</span>
+          )}
         </div>
       </form>
     </div>
