@@ -184,7 +184,8 @@ describe("End-to-End: Complete User Journey", () => {
     expect(res.status).toBe(200);
     expect(res.body.latex).toContain("TestCorp");
     expect(res.body.atsSuggestions).toBeInstanceOf(Array);
-    expect(res.body.downloadUrl).toBeDefined();
+    expect(res.body.documentId).toBeDefined();
+    expect(res.body.atsKeywordsInjected).toBeInstanceOf(Array);
   });
 
   it("Step 9: User applies for the job", async () => {

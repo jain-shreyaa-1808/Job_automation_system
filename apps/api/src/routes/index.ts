@@ -14,6 +14,7 @@ import {
   generateResume,
   parseResume,
   resumeUpload,
+  downloadResumeTex,
   sampleResumeOutput,
 } from "../controllers/resume.controller.js";
 import { getSalaryInsight } from "../controllers/salary.controller.js";
@@ -51,6 +52,7 @@ apiRouter.post(
   validateBody(resumeGenerateSchema),
   generateResume,
 );
+apiRouter.get("/resume/download/:id", downloadResumeTex);
 apiRouter.post("/apply/job", validateBody(applyJobSchema), applyJob);
 apiRouter.post("/hr/find", validateBody(hrFindSchema), findHr);
 apiRouter.patch("/hr/state", validateBody(leadStateSchema), updateLeadState);

@@ -55,11 +55,12 @@ export function DashboardPage() {
           {isLoading && (
             <p className="panel text-center text-sm text-ink/50">Loading…</p>
           )}
-          {!isLoading && (!data?.tabs.newJobs || data.tabs.newJobs.length === 0) && (
-            <p className="panel text-center text-sm text-ink/50">
-              No new jobs yet. Click "Refresh Jobs" to discover matches.
-            </p>
-          )}
+          {!isLoading &&
+            (!data?.tabs.newJobs || data.tabs.newJobs.length === 0) && (
+              <p className="panel text-center text-sm text-ink/50">
+                No new jobs yet. Click "Refresh Jobs" to discover matches.
+              </p>
+            )}
           {data?.tabs.newJobs.map((job) => (
             <JobCard key={job._id} job={job} />
           ))}
@@ -112,9 +113,7 @@ export function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-ink/50">
-                  No recruiter leads yet.
-                </p>
+                <p className="text-sm text-ink/50">No recruiter leads yet.</p>
               )}
             </div>
           </div>

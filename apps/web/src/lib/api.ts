@@ -47,9 +47,10 @@ export async function triggerJobFetch() {
 
 export async function generateResume(jobId: string) {
   const res = await api.post<{
+    documentId: string;
     latex: string;
     atsSuggestions: string[];
-    downloadUrl: string;
+    atsKeywordsInjected: string[];
   }>("/resume/generate", { jobId });
   return res.data;
 }
