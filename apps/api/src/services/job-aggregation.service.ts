@@ -14,31 +14,94 @@ type JobSeed = {
 
 const SAMPLE_JOBS: JobSeed[] = [
   {
-    title: "Software Engineer I",
-    company: "Acme Cloud",
+    title: "Software Development Engineer",
+    company: "Amazon India",
     description:
-      "React, TypeScript, Node.js, MongoDB, REST APIs, Docker, CI/CD.",
-    link: "https://careers.example.com/jobs/software-engineer-i",
-    platform: "Direct Careers",
+      "Java, Python, AWS, distributed systems, microservices, REST APIs, Docker, Kubernetes, CI/CD, system design.",
+    link: "https://amazon.jobs/en/jobs/sde-bengaluru",
+    platform: "Amazon Jobs",
+    location: "Bengaluru",
+  },
+  {
+    title: "Full Stack Developer",
+    company: "Flipkart",
+    description:
+      "React, TypeScript, Node.js, Express, MongoDB, REST APIs, GraphQL, Docker, CI/CD, Agile.",
+    link: "https://flipkart.com/careers/full-stack-developer",
+    platform: "Company Careers",
+    location: "Bengaluru",
+  },
+  {
+    title: "Backend Engineer",
+    company: "Razorpay",
+    description:
+      "Node.js, TypeScript, MongoDB, PostgreSQL, Redis, microservices, Docker, Kubernetes, event-driven architecture.",
+    link: "https://razorpay.com/jobs/backend-engineer",
+    platform: "Company Careers",
+    location: "Bengaluru",
+  },
+  {
+    title: "Software Engineer",
+    company: "Google India",
+    description:
+      "C++, Java, Python, distributed systems, algorithms, data structures, large-scale systems, cloud infrastructure.",
+    link: "https://careers.google.com/jobs/swe-india",
+    platform: "Google Careers",
+    location: "Hyderabad",
+  },
+  {
+    title: "Software Development Engineer II",
+    company: "Microsoft",
+    description:
+      "C#, TypeScript, React, Azure, cloud services, microservices, REST APIs, system design, CI/CD pipelines.",
+    link: "https://careers.microsoft.com/sde2-hyderabad",
+    platform: "Microsoft Careers",
+    location: "Hyderabad",
+  },
+  {
+    title: "Full Stack Engineer",
+    company: "Swiggy",
+    description:
+      "React, Node.js, JavaScript, TypeScript, MongoDB, Redis, AWS, Docker, microservices, real-time systems.",
+    link: "https://careers.swiggy.com/full-stack-engineer",
+    platform: "Company Careers",
+    location: "Bengaluru",
+  },
+  {
+    title: "Backend Developer",
+    company: "Zerodha",
+    description:
+      "Python, Go, PostgreSQL, Redis, REST APIs, message queues, Linux, performance optimization, fintech.",
+    link: "https://zerodha.com/careers/backend-developer",
+    platform: "Company Careers",
+    location: "Remote",
+  },
+  {
+    title: "Software Engineer - Platform",
+    company: "Atlassian",
+    description:
+      "Java, TypeScript, React, AWS, Docker, Kubernetes, microservices, REST APIs, Agile, distributed systems.",
+    link: "https://atlassian.com/careers/swe-platform",
+    platform: "Atlassian Careers",
     location: "Bengaluru",
   },
   {
     title: "Wireless TAC Engineer",
     company: "NetWave Systems",
     description:
-      "Wireless, networking, TAC workflows, TCP/IP, Cisco, troubleshooting, incident response.",
+      "Wireless, networking, TAC workflows, TCP/IP, Cisco, troubleshooting, incident response, CCNA, CCNP.",
     link: "https://jobs.example.com/netwave/wireless-tac-engineer",
     platform: "Foundit",
     location: "Remote",
   },
   {
-    title: "Technical Consulting Engineer",
-    company: "Orbit Networks",
+    title: "Network Development Engineer",
+    company: "Cisco Systems",
     description:
-      "Customer support, log analysis, networking, Linux, Python, wireless troubleshooting.",
-    link: "https://greenhouse.io/orbit/jobs/12345",
-    platform: "Greenhouse",
-    location: "Pune",
+      "Python, networking, automation, REST APIs, wireless, Cisco IOS, Linux, Docker, scripting, CCNA.",
+    link: "https://jobs.cisco.com/nde-bengaluru",
+    platform: "Cisco Careers",
+    location: "Bengaluru",
   },
 ];
 
@@ -66,9 +129,14 @@ export class JobAggregationService {
           ],
     );
 
+    const preferredKeywords = [...preferredRoles].flatMap((role) =>
+      role.split(/\s+/).filter((w) => w.length > 2),
+    );
+
     const jobs = SAMPLE_JOBS.filter((job) => {
       const lowerTitle = job.title.toLowerCase();
-      return [...preferredRoles].some((role) => lowerTitle.includes(role));
+      // Match if any significant keyword from preferred roles appears in the title
+      return preferredKeywords.some((keyword) => lowerTitle.includes(keyword));
     });
 
     const profileSkills = profile?.skills ?? [];

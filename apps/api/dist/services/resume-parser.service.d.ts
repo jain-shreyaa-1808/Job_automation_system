@@ -52,9 +52,11 @@ export declare class ResumeParserService {
     };
     private extractText;
     private structureResume;
+    private splitSections;
     private extractProjects;
     private extractExperience;
     private extractEducation;
+    private extractCertifications;
     private extractSection;
 }
 export {};

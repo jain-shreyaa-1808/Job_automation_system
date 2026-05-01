@@ -1,17 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { SectionHeader } from "../components/SectionHeader";
 import { useUpdateSettings } from "../hooks/usePlatformData";
+import { api } from "../lib/api";
 
 export function SettingsPage() {
   const [form, setForm] = useState({
-    currentCtc: 8,
-    expectedCtc: 12,
-    preferredRoles: "Software Engineer,Wireless TAC Engineer",
-    preferredLocations: "Bengaluru,Remote",
+    currentCtc: 0,
+    expectedCtc: 0,
+    preferredRoles: "",
+    preferredLocations: "",
     autoApplyEnabled: false,
   });
+  const [loaded, setLoaded] = useState(false);
   const updateSettings = useUpdateSettings();
+
+  useEffect(() => {
+    api.get("/auth/me").then((res) => {
+      const u = res.data.user;
+      setForm({
+        currentCtc: u.currentCtc ?? 0,
+        expectedCtc: u.expectedCtc ?? 0,
+        preferredRoles: (u.preferredRoles ?? []).join(", "),
+        preferredLocations: (u.preferredLocations ?? []).join(", "),
+        autoApplyEnabled: u.autoApplyEnabled ?? false,
+      });
+      setLoaded(true);
+    });
+  }, []);
 
   return (
     <div>
