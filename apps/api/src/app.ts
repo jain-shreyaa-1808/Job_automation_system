@@ -14,11 +14,7 @@ export function createApp() {
   app.use(helmet());
   app.use(
     cors({
-      origin: [
-        env.FRONTEND_URL,
-        "http://localhost:5173",
-        /\.onrender\.com$/,
-      ],
+      origin: [env.FRONTEND_URL, "http://localhost:5173", /\.onrender\.com$/],
       credentials: true,
     }),
   );
