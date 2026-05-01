@@ -69,8 +69,14 @@ export function useUpdateSettings() {
 }
 
 export function useParseResume() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: parseResume,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["resumeProfile"] });
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 

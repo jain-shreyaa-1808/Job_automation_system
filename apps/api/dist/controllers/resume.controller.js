@@ -30,9 +30,17 @@ export const getResumeProfile = asyncHandler(async (request, response) => {
         userId: request.user.sub,
     }).lean();
     if (!profile) {
-        response.status(StatusCodes.NOT_FOUND).json({
-            message: "No resume uploaded yet. Please upload your resume first.",
+        response.json({
             hasResume: false,
+            resumeFileName: null,
+            name: null,
+            skills: [],
+            experience: [],
+            projects: [],
+            education: [],
+            certifications: [],
+            resumeScore: null,
+            updatedAt: null,
         });
         return;
     }

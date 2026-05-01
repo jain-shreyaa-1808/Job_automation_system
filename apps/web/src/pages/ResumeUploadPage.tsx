@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { SectionHeader } from "../components/SectionHeader";
-import { useParseResume } from "../hooks/usePlatformData";
+import { useParseResume, useTriggerJobFetch } from "../hooks/usePlatformData";
 import { api } from "../lib/api";
 
 type ResumeProfile = {
@@ -36,6 +36,7 @@ type ResumeProfile = {
 export function ResumeUploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const parseResume = useParseResume();
+  const triggerJobFetch = useTriggerJobFetch();
 
   const {
     data: existingResume,
@@ -55,6 +56,8 @@ export function ResumeUploadPage() {
         onSuccess: () => {
           setSelectedFile(null);
           void refetch();
+          // Auto-fetch jobs based on the new resume skills
+          triggerJobFetch.mutate();
         },
       });
     }
