@@ -142,11 +142,21 @@ afterAll(async () => {
   const db = mongoose.connection.db;
   if (db) {
     await db.collection("users").deleteMany({ email: TEST_USER.email });
-    await db.collection("userprofiles").deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
-    await db.collection("jobs").deleteMany({ sourceUserId: new mongoose.Types.ObjectId(userId) });
-    await db.collection("jobapplications").deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
-    await db.collection("recruiterleads").deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
-    await db.collection("generateddocuments").deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
+    await db
+      .collection("userprofiles")
+      .deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
+    await db
+      .collection("jobs")
+      .deleteMany({ sourceUserId: new mongoose.Types.ObjectId(userId) });
+    await db
+      .collection("jobapplications")
+      .deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
+    await db
+      .collection("recruiterleads")
+      .deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
+    await db
+      .collection("generateddocuments")
+      .deleteMany({ userId: new mongoose.Types.ObjectId(userId) });
   }
   await mongoose.disconnect();
 });
@@ -272,7 +282,9 @@ describe("AI Resume Generation - ATS Compliance", () => {
       .set("Authorization", `Bearer ${accessToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.headers["content-type"]).toMatch(/text\/x-tex|application\/x-latex|application\/octet/);
+    expect(res.headers["content-type"]).toMatch(
+      /text\/x-tex|application\/x-latex|application\/octet/,
+    );
   });
 });
 
@@ -442,9 +454,13 @@ describe("AI Outreach Generation - Message Quality", () => {
   it("messages are personalized (not generic templates)", () => {
     // Email should contain specific technical terms from the JD
     const email = outreachResult.email.toLowerCase();
-    const jdTermsInEmail = ["react", "node", "typescript", "mongodb", "docker"].filter(
-      (t) => email.includes(t),
-    );
+    const jdTermsInEmail = [
+      "react",
+      "node",
+      "typescript",
+      "mongodb",
+      "docker",
+    ].filter((t) => email.includes(t));
     expect(jdTermsInEmail.length).toBeGreaterThanOrEqual(2);
   });
 
