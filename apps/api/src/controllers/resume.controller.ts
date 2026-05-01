@@ -5,6 +5,7 @@ import { env } from "../config/env.js";
 import { ResumeOptimizerService } from "../services/resume-optimizer.service.js";
 import { ResumeParserService } from "../services/resume-parser.service.js";
 import { GeneratedDocumentModel } from "../models/GeneratedDocument.js";
+import { UserProfileModel } from "../models/UserProfile.js";
 import { asyncHandler } from "../utils/async-handler.js";
 
 export const resumeUpload = multer({
@@ -30,6 +31,50 @@ export const parseResume = asyncHandler(async (request, response) => {
     request.file,
   );
   response.status(StatusCodes.CREATED).json(parsed);
+});
+
+/** GET /resume/profile — return the persisted resume profile for current user */
+export const getResumeProfile = asyncHandler(async (request, response) => {
+  const profile = await UserProfileModel.findOne({
+    userId: request.user!.sub,
+  }).lean();
+
+  if (!profile) {
+    response.status(StatusCodes.NOT_FOUND).json({
+      message: "No resume uploaded yet. Please upload your resume first.",
+      hasResume: false,
+    });
+    return;
+  }
+
+  response.json({
+    hasResume: true,
+    resumeFileName: profile.resumeFileName ?? null,
+    name: profile.name,
+    skills: profile.skills,
+    experience: profile.experience,
+    projects: profile.projects,
+    education: profile.education,
+    certifications: profile.certifications,
+    resumeScore: profile.resumeScore,
+    updatedAt: (profile as any).updatedAt,
+  });
+});
+
+/** PUT /resume/profile — update the resume by re-uploading (replaces old one) */
+export const updateResume = asyncHandler(async (request, response) => {
+  if (!request.file) {
+    response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: "Resume file is required" });
+    return;
+  }
+
+  const parsed = await parserService.parseAndStore(
+    request.user!.sub,
+    request.file,
+  );
+  response.json({ message: "Resume updated successfully", ...parsed });
 });
 
 export const generateResume = asyncHandler(async (request, response) => {

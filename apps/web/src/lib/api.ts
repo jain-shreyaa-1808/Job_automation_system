@@ -85,3 +85,11 @@ export async function autoApply(jobId: string) {
   const res = await api.post("/apply/job", { jobId });
   return res.data;
 }
+
+export async function confirmApplication(
+  jobId: string,
+  applicationData: Record<string, unknown>,
+) {
+  const res = await api.post("/apply/confirm", { jobId, applicationData });
+  return res.data;
+}

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   autoApply,
+  confirmApplication,
   fetchDashboard,
   fetchJobs,
   generateOutreach,
@@ -65,6 +66,23 @@ export function useAutoApply() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: autoApply,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useConfirmApplication() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      jobId,
+      applicationData,
+    }: {
+      jobId: string;
+      applicationData: Record<string, unknown>;
+    }) => confirmApplication(jobId, applicationData),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["jobs"] });
       void queryClient.invalidateQueries({ queryKey: ["dashboard"] });

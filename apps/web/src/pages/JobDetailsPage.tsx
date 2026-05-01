@@ -1,13 +1,12 @@
 import { Link, useParams } from "react-router-dom";
 
 import { SectionHeader } from "../components/SectionHeader";
-import { useAutoApply, useJobsQuery } from "../hooks/usePlatformData";
+import { useJobsQuery } from "../hooks/usePlatformData";
 
 export function JobDetailsPage() {
   const { jobId } = useParams();
   const { data } = useJobsQuery();
   const job = data?.find((item) => item._id === jobId) ?? data?.[0];
-  const autoApply = useAutoApply();
 
   if (!job) {
     return <div className="panel">No job selected.</div>;
@@ -93,27 +92,16 @@ export function JobDetailsPage() {
           >
             Generate Outreach
           </Link>
-          <button
-            type="button"
-            className="button-secondary w-full"
-            disabled={
-              autoApply.isPending ||
-              job.status === "applied" ||
-              job.status === "in-progress"
-            }
-            onClick={() => autoApply.mutate(job._id)}
+          <Link
+            to={`/auto-apply?jobId=${job._id}`}
+            className={`button-secondary w-full text-center ${
+              job.status === "applied" ? "pointer-events-none opacity-50" : ""
+            }`}
           >
-            {autoApply.isPending
-              ? "Queueing…"
-              : job.status === "applied"
-                ? "Already Applied"
-                : "Queue Auto Apply"}
-          </button>
-          {autoApply.isSuccess && (
-            <p className="text-center text-sm text-moss">
-              Application queued successfully!
-            </p>
-          )}
+            {job.status === "applied"
+              ? "Already Applied"
+              : "Queue Auto Apply"}
+          </Link>
         </section>
       </div>
     </div>

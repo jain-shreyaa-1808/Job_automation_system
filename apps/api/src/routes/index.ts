@@ -1,6 +1,9 @@
 import { Router } from "express";
 
-import { applyJob } from "../controllers/apply.controller.js";
+import {
+  applyJob,
+  confirmApplication,
+} from "../controllers/apply.controller.js";
 import { login, me, signup } from "../controllers/auth.controller.js";
 import { findHr, updateLeadState } from "../controllers/hr.controller.js";
 import {
@@ -12,10 +15,12 @@ import {
 import { generateOutreach } from "../controllers/outreach.controller.js";
 import {
   generateResume,
+  getResumeProfile,
   parseResume,
   resumeUpload,
   downloadResumeTex,
   sampleResumeOutput,
+  updateResume,
 } from "../controllers/resume.controller.js";
 import { getSalaryInsight } from "../controllers/salary.controller.js";
 import { updateSettings } from "../controllers/settings.controller.js";
@@ -43,6 +48,8 @@ apiRouter.use(requireAuth);
 apiRouter.get("/auth/me", me);
 apiRouter.put("/settings", validateBody(settingsSchema), updateSettings);
 apiRouter.post("/parse-resume", resumeUpload.single("resume"), parseResume);
+apiRouter.get("/resume/profile", getResumeProfile);
+apiRouter.put("/resume/update", resumeUpload.single("resume"), updateResume);
 apiRouter.post("/jobs/fetch", fetchJobs);
 apiRouter.get("/jobs", listJobs);
 apiRouter.post("/jobs/match", matchJobs);
@@ -54,6 +61,7 @@ apiRouter.post(
 );
 apiRouter.get("/resume/download/:id", downloadResumeTex);
 apiRouter.post("/apply/job", validateBody(applyJobSchema), applyJob);
+apiRouter.post("/apply/confirm", confirmApplication);
 apiRouter.post("/hr/find", validateBody(hrFindSchema), findHr);
 apiRouter.patch("/hr/state", validateBody(leadStateSchema), updateLeadState);
 apiRouter.post(

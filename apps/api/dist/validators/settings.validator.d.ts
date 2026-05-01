@@ -11,12 +11,12 @@ export declare const settingsSchema: z.ZodObject<{
         password: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         platform: string;
-        password: string;
         username: string;
+        password: string;
     }, {
         platform: string;
-        password: string;
         username: string;
+        password: string;
     }>, "many">>;
 }, "strip", z.ZodTypeAny, {
     currentCtc?: number | undefined;
@@ -26,8 +26,8 @@ export declare const settingsSchema: z.ZodObject<{
     autoApplyEnabled?: boolean | undefined;
     portalCredentials?: {
         platform: string;
-        password: string;
         username: string;
+        password: string;
     }[] | undefined;
 }, {
     currentCtc?: number | undefined;
@@ -37,7 +37,7 @@ export declare const settingsSchema: z.ZodObject<{
     autoApplyEnabled?: boolean | undefined;
     portalCredentials?: {
         platform: string;
-        password: string;
         username: string;
+        password: string;
     }[] | undefined;
 }>;

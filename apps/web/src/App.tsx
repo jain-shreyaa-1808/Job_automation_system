@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { useAuth } from "./context/AuthContext";
 import { AppShell } from "./components/AppShell";
+import { AutoApplyPage } from "./pages/AutoApplyPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HROutreachPage } from "./pages/HROutreachPage";
 import { JobDetailsPage } from "./pages/JobDetailsPage";
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/resume" element={<ResumeUploadPage />} />
         <Route path="/optimizer" element={<ResumeOptimizerPage />} />
         <Route path="/outreach" element={<HROutreachPage />} />
+        <Route path="/auto-apply" element={<AutoApplyPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>

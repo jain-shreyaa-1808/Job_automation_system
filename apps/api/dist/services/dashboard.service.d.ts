@@ -308,7 +308,7 @@ export declare class DashboardService {
             })[];
         };
         applications: (import("mongoose").Document<unknown, {}, {
-            status: "new" | "applied" | "in-progress" | "finished";
+            status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
             userId: {
                 prototype?: import("mongoose").Types.ObjectId | null | undefined;
                 cacheHexString?: unknown;
@@ -328,6 +328,7 @@ export declare class DashboardService {
                 isValid?: {} | null | undefined;
             };
             appliedVia: string;
+            preFilledData: any;
             history: import("mongoose").Types.DocumentArray<{
                 action: string;
                 details: string;
@@ -346,7 +347,7 @@ export declare class DashboardService {
         } & import("mongoose").DefaultTimestampProps, {}, {
             timestamps: true;
         }> & {
-            status: "new" | "applied" | "in-progress" | "finished";
+            status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
             userId: {
                 prototype?: import("mongoose").Types.ObjectId | null | undefined;
                 cacheHexString?: unknown;
@@ -366,6 +367,7 @@ export declare class DashboardService {
                 isValid?: {} | null | undefined;
             };
             appliedVia: string;
+            preFilledData: any;
             history: import("mongoose").Types.DocumentArray<{
                 action: string;
                 details: string;

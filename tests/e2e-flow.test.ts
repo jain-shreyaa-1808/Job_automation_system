@@ -190,6 +190,7 @@ describe("End-to-End: Complete User Journey", () => {
   });
 
   it("Step 9: User applies for the job", async () => {
+    // Step 1: Queue application (now returns pending-verification with pre-filled data)
     const res = await request(app)
       .post("/api/v1/apply/job")
       .set("Authorization", `Bearer ${accessToken}`)
@@ -197,8 +198,18 @@ describe("End-to-End: Complete User Journey", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.application).toBeDefined();
-    expect(res.body.application.status).toBe("new");
+    expect(res.body.application.status).toBe("pending-verification");
     expect(res.body.application.appliedVia).toBe("automation");
+    expect(res.body.preFilledData).toBeDefined();
+
+    // Step 2: Confirm application with verified data
+    const confirmRes = await request(app)
+      .post("/api/v1/apply/confirm")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ jobId: testJobId, applicationData: res.body.preFilledData });
+
+    expect(confirmRes.status).toBe(200);
+    expect(confirmRes.body.status).toBe("applied");
   });
 
   it("Step 10: Dashboard reflects all activity", async () => {

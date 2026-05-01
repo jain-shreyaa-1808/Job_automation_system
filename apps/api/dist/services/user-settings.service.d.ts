@@ -13,9 +13,15 @@ type SettingsInput = {
 };
 export declare class UserSettingsService {
     update(userId: string, input: SettingsInput): Promise<(import("mongoose").Document<unknown, {}, {
+        location: string;
         fullName: string;
         email: string;
         passwordHash: string;
+        phone: string;
+        linkedinUrl: string;
+        portfolioUrl: string;
+        githubUrl: string;
+        noticePeriod: string;
         currentCtc: number;
         expectedCtc: number;
         preferredRoles: string[];
@@ -44,9 +50,15 @@ export declare class UserSettingsService {
     } & import("mongoose").DefaultTimestampProps, {}, {
         timestamps: true;
     }> & {
+        location: string;
         fullName: string;
         email: string;
         passwordHash: string;
+        phone: string;
+        linkedinUrl: string;
+        portfolioUrl: string;
+        githubUrl: string;
+        noticePeriod: string;
         currentCtc: number;
         expectedCtc: number;
         preferredRoles: string[];

@@ -2,7 +2,7 @@ import { Schema, Types, type InferSchemaType } from "mongoose";
 declare const jobApplicationSchema: Schema<any, import("mongoose").Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
     timestamps: true;
 }, {
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -22,6 +22,7 @@ declare const jobApplicationSchema: Schema<any, import("mongoose").Model<any, an
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -38,7 +39,7 @@ declare const jobApplicationSchema: Schema<any, import("mongoose").Model<any, an
     tailoredResumePath?: string | null | undefined;
     lastAttemptedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -58,6 +59,7 @@ declare const jobApplicationSchema: Schema<any, import("mongoose").Model<any, an
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -76,7 +78,7 @@ declare const jobApplicationSchema: Schema<any, import("mongoose").Model<any, an
 } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
     timestamps: true;
 }>> & import("mongoose").FlatRecord<{
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -96,6 +98,7 @@ declare const jobApplicationSchema: Schema<any, import("mongoose").Model<any, an
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -120,7 +123,7 @@ export type JobApplicationDocument = InferSchemaType<typeof jobApplicationSchema
     _id: string;
 };
 export declare const JobApplicationModel: import("mongoose").Model<{
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -140,6 +143,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -156,7 +160,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
     tailoredResumePath?: string | null | undefined;
     lastAttemptedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, {}, {}, {}, import("mongoose").Document<unknown, {}, {
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -176,6 +180,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -194,7 +199,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
 } & import("mongoose").DefaultTimestampProps, {}, {
     timestamps: true;
 }> & {
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -214,6 +219,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -236,7 +242,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
 }, Schema<any, import("mongoose").Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
     timestamps: true;
 }, {
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -256,6 +262,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -272,7 +279,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
     tailoredResumePath?: string | null | undefined;
     lastAttemptedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -292,6 +299,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;
@@ -310,7 +318,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
 } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
     timestamps: true;
 }>> & import("mongoose").FlatRecord<{
-    status: "new" | "applied" | "in-progress" | "finished";
+    status: "new" | "pending-verification" | "applied" | "in-progress" | "finished";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -330,6 +338,7 @@ export declare const JobApplicationModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     appliedVia: string;
+    preFilledData: any;
     history: Types.DocumentArray<{
         action: string;
         details: string;

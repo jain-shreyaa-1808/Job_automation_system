@@ -12,12 +12,47 @@ export function createApp() {
   const app = express();
 
   app.use(helmet());
+
+  // Production-ready CORS configuration
+  const allowedOrigins = [
+    env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://localhost:3000",
+  ];
+
   app.use(
     cors({
-      origin: [env.FRONTEND_URL, "http://localhost:5173", /\.onrender\.com$/],
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, server-to-server)
+        if (!origin) return callback(null, true);
+        // Allow configured origins and any *.onrender.com deployment
+        if (
+          allowedOrigins.includes(origin) ||
+          /\.onrender\.com$/.test(origin) ||
+          /\.vercel\.app$/.test(origin) ||
+          /\.netlify\.app$/.test(origin)
+        ) {
+          return callback(null, true);
+        }
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      },
       credentials: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+      ],
+      exposedHeaders: ["Content-Disposition"],
+      maxAge: 86400, // Cache preflight for 24 hours
     }),
   );
+
+  // Explicitly handle OPTIONS preflight requests
+  app.options("*", cors());
+
   app.use(express.json({ limit: "5mb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use((request, _response, next) => {

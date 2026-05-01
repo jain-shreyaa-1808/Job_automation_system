@@ -8,17 +8,17 @@ export declare const signupSchema: z.ZodObject<{
     preferredRoles: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
     preferredLocations: z.ZodDefault<z.ZodArray<z.ZodString, "many">>;
 }, "strip", z.ZodTypeAny, {
-    password: string;
     fullName: string;
     email: string;
     preferredRoles: string[];
     preferredLocations: string[];
+    password: string;
     currentCtc?: number | undefined;
     expectedCtc?: number | undefined;
 }, {
-    password: string;
     fullName: string;
     email: string;
+    password: string;
     currentCtc?: number | undefined;
     expectedCtc?: number | undefined;
     preferredRoles?: string[] | undefined;
@@ -28,9 +28,9 @@ export declare const loginSchema: z.ZodObject<{
     email: z.ZodString;
     password: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    password: string;
     email: string;
+    password: string;
 }, {
-    password: string;
     email: string;
+    password: string;
 }>;

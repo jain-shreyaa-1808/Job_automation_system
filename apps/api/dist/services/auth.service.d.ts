@@ -35,9 +35,15 @@ export declare class AuthService {
         };
     }>;
     getUserById(userId: string): Promise<(import("mongoose").Document<unknown, {}, {
+        location: string;
         fullName: string;
         email: string;
         passwordHash: string;
+        phone: string;
+        linkedinUrl: string;
+        portfolioUrl: string;
+        githubUrl: string;
+        noticePeriod: string;
         currentCtc: number;
         expectedCtc: number;
         preferredRoles: string[];
@@ -66,9 +72,15 @@ export declare class AuthService {
     } & import("mongoose").DefaultTimestampProps, {}, {
         timestamps: true;
     }> & {
+        location: string;
         fullName: string;
         email: string;
         passwordHash: string;
+        phone: string;
+        linkedinUrl: string;
+        portfolioUrl: string;
+        githubUrl: string;
+        noticePeriod: string;
         currentCtc: number;
         expectedCtc: number;
         preferredRoles: string[];
