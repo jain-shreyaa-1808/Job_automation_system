@@ -23,8 +23,10 @@ export declare class JobAggregationService {
         experienceMin: number;
         experienceMax: number;
         employmentType: string;
+        applicantCount: number;
         discoveredAt: NativeDate;
         externalId?: string | null | undefined;
+        postedDate?: NativeDate | null | undefined;
     } & import("mongoose").DefaultTimestampProps, {}, {
         timestamps: true;
     }> & {
@@ -50,8 +52,10 @@ export declare class JobAggregationService {
         experienceMin: number;
         experienceMax: number;
         employmentType: string;
+        applicantCount: number;
         discoveredAt: NativeDate;
         externalId?: string | null | undefined;
+        postedDate?: NativeDate | null | undefined;
     } & import("mongoose").DefaultTimestampProps & {
         _id: import("mongoose").Types.ObjectId;
     } & {

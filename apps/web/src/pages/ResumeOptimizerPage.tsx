@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { SectionHeader } from "../components/SectionHeader";
 import { useGenerateResume, useJobsQuery } from "../hooks/usePlatformData";
@@ -6,11 +7,24 @@ import { api } from "../lib/api";
 
 export function ResumeOptimizerPage() {
   const { data: jobs, isLoading } = useJobsQuery();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [jobId, setJobId] = useState<string>("");
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const generateResume = useGenerateResume();
+
+  // Auto-select job from URL params
+  useEffect(() => {
+    const urlJobId = searchParams.get("jobId");
+    if (urlJobId && jobs && !jobId) {
+      const found = jobs.find((j) => j._id === urlJobId);
+      if (found) {
+        setJobId(found._id);
+        setSearch(`${found.title} — ${found.company}`);
+      }
+    }
+  }, [searchParams, jobs, jobId]);
 
   const filtered = useMemo(() => {
     if (!jobs) return [];

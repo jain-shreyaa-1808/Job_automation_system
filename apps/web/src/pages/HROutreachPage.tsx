@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { SectionHeader } from "../components/SectionHeader";
 import {
@@ -11,10 +12,23 @@ export function HROutreachPage() {
   const { data: jobs, isLoading } = useJobsQuery();
   const { data: dashboard } = useDashboardQuery();
   const outreach = useGenerateOutreach();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [jobId, setJobId] = useState<string>("");
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Auto-select job from URL params
+  useEffect(() => {
+    const urlJobId = searchParams.get("jobId");
+    if (urlJobId && jobs && !jobId) {
+      const found = jobs.find((j) => j._id === urlJobId);
+      if (found) {
+        setJobId(found._id);
+        setSearch(`${found.title} — ${found.company}`);
+      }
+    }
+  }, [searchParams, jobs, jobId]);
 
   const filtered = useMemo(() => {
     if (!jobs) return [];
@@ -130,19 +144,31 @@ export function HROutreachPage() {
           </button>
 
           {(outreach.data?.email || outreach.data?.linkedinMessage) && (
-            <div className="grid gap-4 pt-2 lg:grid-cols-2">
-              <div className="rounded-3xl bg-skywash p-5">
-                <h3 className="text-lg font-semibold">Cold Email</h3>
-                <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
-                  {outreach.data.email}
-                </pre>
+            <div className="space-y-4 pt-2">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-3xl bg-skywash p-5">
+                  <h3 className="text-lg font-semibold">Cold Email</h3>
+                  <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
+                    {outreach.data.email}
+                  </pre>
+                </div>
+                <div className="rounded-3xl bg-white p-5 ring-1 ring-ink/10">
+                  <h3 className="text-lg font-semibold">LinkedIn Message</h3>
+                  <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
+                    {outreach.data.linkedinMessage}
+                  </pre>
+                </div>
               </div>
-              <div className="rounded-3xl bg-white p-5 ring-1 ring-ink/10">
-                <h3 className="text-lg font-semibold">LinkedIn Message</h3>
-                <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
-                  {outreach.data.linkedinMessage}
-                </pre>
-              </div>
+              {outreach.data.referralMessage && (
+                <div className="rounded-3xl bg-moss/5 p-5 ring-1 ring-moss/20">
+                  <h3 className="text-lg font-semibold text-moss">
+                    Referral Request Message
+                  </h3>
+                  <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
+                    {outreach.data.referralMessage}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 

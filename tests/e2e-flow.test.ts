@@ -173,6 +173,7 @@ describe("End-to-End: Complete User Journey", () => {
     expect(res.body.email).toContain("Backend Developer");
     expect(res.body.email).toContain("TestCorp");
     expect(res.body.linkedinMessage).toContain("TestCorp");
+    expect(res.body.referralMessage).toContain("TestCorp");
   });
 
   it("Step 8: User generates tailored resume", async () => {

@@ -13,9 +13,7 @@ export class ResumeOptimizerService {
         }
         // Extract ATS keywords from the job description
         const jdKeywords = this.extractJDKeywords(job.description);
-        const atsKeywords = [
-            ...new Set([...job.matchedSkills, ...jdKeywords]),
-        ];
+        const atsKeywords = [...new Set([...job.matchedSkills, ...jdKeywords])];
         const latex = this.buildRefinedResume(profile, job, atsKeywords);
         const atsSuggestions = this.generateAtsSuggestions(profile, job, atsKeywords);
         const document = await GeneratedDocumentModel.create({
@@ -45,14 +43,51 @@ export class ResumeOptimizerService {
             .map((t) => t.trim())
             .filter((t) => t.length > 1);
         const stopWords = new Set([
-            "and", "the", "for", "with", "from", "that", "this",
-            "are", "was", "will", "has", "have", "not", "but",
-            "all", "can", "had", "her", "one", "our", "out",
-            "you", "been", "each", "make", "like", "into",
-            "year", "years", "experience", "strong", "ability",
-            "work", "team", "role", "good", "etc", "must",
-            "including", "preferred", "required", "such",
-            "full-time", "full", "time",
+            "and",
+            "the",
+            "for",
+            "with",
+            "from",
+            "that",
+            "this",
+            "are",
+            "was",
+            "will",
+            "has",
+            "have",
+            "not",
+            "but",
+            "all",
+            "can",
+            "had",
+            "her",
+            "one",
+            "our",
+            "out",
+            "you",
+            "been",
+            "each",
+            "make",
+            "like",
+            "into",
+            "year",
+            "years",
+            "experience",
+            "strong",
+            "ability",
+            "work",
+            "team",
+            "role",
+            "good",
+            "etc",
+            "must",
+            "including",
+            "preferred",
+            "required",
+            "such",
+            "full-time",
+            "full",
+            "time",
         ]);
         return [...new Set(tokens.filter((t) => !stopWords.has(t)))];
     }

@@ -2,7 +2,7 @@ import { Schema, Types, type InferSchemaType } from "mongoose";
 declare const generatedDocumentSchema: Schema<any, import("mongoose").Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
     timestamps: true;
 }, {
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -25,7 +25,7 @@ declare const generatedDocumentSchema: Schema<any, import("mongoose").Model<any,
         isValid?: {} | null | undefined;
     } | null | undefined;
 } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -50,7 +50,7 @@ declare const generatedDocumentSchema: Schema<any, import("mongoose").Model<any,
 } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
     timestamps: true;
 }>> & import("mongoose").FlatRecord<{
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -81,7 +81,7 @@ export type GeneratedDocumentRecord = InferSchemaType<typeof generatedDocumentSc
     _id: string;
 };
 export declare const GeneratedDocumentModel: import("mongoose").Model<{
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -104,7 +104,7 @@ export declare const GeneratedDocumentModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     } | null | undefined;
 } & import("mongoose").DefaultTimestampProps, {}, {}, {}, import("mongoose").Document<unknown, {}, {
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -129,7 +129,7 @@ export declare const GeneratedDocumentModel: import("mongoose").Model<{
 } & import("mongoose").DefaultTimestampProps, {}, {
     timestamps: true;
 }> & {
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -158,7 +158,7 @@ export declare const GeneratedDocumentModel: import("mongoose").Model<{
 }, Schema<any, import("mongoose").Model<any, any, any, any, any, any>, {}, {}, {}, {}, {
     timestamps: true;
 }, {
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -181,7 +181,7 @@ export declare const GeneratedDocumentModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     } | null | undefined;
 } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;
@@ -206,7 +206,7 @@ export declare const GeneratedDocumentModel: import("mongoose").Model<{
 } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
     timestamps: true;
 }>> & import("mongoose").FlatRecord<{
-    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message";
+    type: "resume" | "cover-letter" | "outreach-email" | "linkedin-message" | "referral-request";
     userId: {
         prototype?: Types.ObjectId | null | undefined;
         cacheHexString?: unknown;

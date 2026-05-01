@@ -4,7 +4,7 @@ const generatedDocumentSchema = new Schema({
     jobId: { type: Types.ObjectId, ref: "Job" },
     type: {
         type: String,
-        enum: ["resume", "cover-letter", "outreach-email", "linkedin-message"],
+        enum: ["resume", "cover-letter", "outreach-email", "linkedin-message", "referral-request"],
         required: true,
     },
     title: { type: String, required: true },

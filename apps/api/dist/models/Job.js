@@ -14,6 +14,8 @@ const jobSchema = new Schema({
     experienceMin: { type: Number, default: 0 },
     experienceMax: { type: Number, default: 2 },
     employmentType: { type: String, default: "Full-time" },
+    postedDate: { type: Date },
+    applicantCount: { type: Number, default: 0 },
     status: {
         type: String,
         enum: ["new", "applied", "in-progress", "finished", "bookmarked"],

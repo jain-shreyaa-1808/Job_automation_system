@@ -56,10 +56,11 @@ export async function generateResume(jobId: string) {
 }
 
 export async function generateOutreach(jobId: string) {
-  const res = await api.post<{ email: string; linkedinMessage: string }>(
-    "/outreach/generate",
-    { jobId },
-  );
+  const res = await api.post<{
+    email: string;
+    linkedinMessage: string;
+    referralMessage: string;
+  }>("/outreach/generate", { jobId });
   return res.data;
 }
 

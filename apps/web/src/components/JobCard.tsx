@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bookmark, MapPin } from "lucide-react";
+import { ArrowUpRight, Bookmark, Clock, MapPin, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { Job } from "../types/app";
@@ -7,14 +7,39 @@ type JobCardProps = {
   job: Job;
 };
 
+function getDaysAgo(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  return Math.max(
+    0,
+    Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000),
+  );
+}
+
+function formatDaysAgo(days: number): string {
+  if (days === 0) return "Posted today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
+
 export function JobCard({ job }: JobCardProps) {
+  const daysAgo = getDaysAgo(job.postedDate);
+  const isEarlyApplicant =
+    daysAgo !== null && daysAgo <= 2 && (job.applicantCount ?? 999) < 50;
+
   return (
     <article className="panel group transition hover:-translate-y-1">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ember">
-            {job.platform}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ember">
+              {job.platform}
+            </p>
+            {isEarlyApplicant && (
+              <span className="rounded-full bg-moss/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-moss">
+                Early Applicant
+              </span>
+            )}
+          </div>
           <h3 className="mt-3 text-2xl">{job.title}</h3>
           <p className="mt-2 text-sm text-ink/65">{job.company}</p>
         </div>
@@ -39,9 +64,33 @@ export function JobCard({ job }: JobCardProps) {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm text-ink/65">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4" />
-          {job.location}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            {job.location}
+          </div>
+          {daysAgo !== null && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span
+                className={
+                  daysAgo <= 2
+                    ? "font-semibold text-moss"
+                    : daysAgo <= 7
+                      ? "text-ink/70"
+                      : "text-ink/40"
+                }
+              >
+                {formatDaysAgo(daysAgo)}
+              </span>
+            </div>
+          )}
+          {job.applicantCount != null && (
+            <div className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              <span>{job.applicantCount} applicants</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <button type="button" className="button-secondary px-4 py-2">

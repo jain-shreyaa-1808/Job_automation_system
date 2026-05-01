@@ -9,6 +9,8 @@ export type Job = {
   relevanceScore: number;
   matchedSkills: string[];
   missingSkills: string[];
+  postedDate?: string;
+  applicantCount?: number;
   status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
 };
 

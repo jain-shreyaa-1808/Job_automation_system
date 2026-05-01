@@ -27,7 +27,12 @@ export const listJobs = asyncHandler(async (request, response) => {
     const jobs = await JobModel.find({
         sourceUserId: request.user.sub,
         ...(status ? { status } : {}),
-    }).sort({ relevanceScore: -1, createdAt: -1 });
+    }).sort({
+        postedDate: -1,
+        applicantCount: 1,
+        relevanceScore: -1,
+        createdAt: -1,
+    });
     response.json({ jobs });
 });
 export const dashboard = asyncHandler(async (request, response) => {
