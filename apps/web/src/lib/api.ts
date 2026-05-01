@@ -45,6 +45,13 @@ export async function triggerJobFetch() {
   return res.data.jobs;
 }
 
+export async function validateJobLinks() {
+  const res = await api.post<{ total: number; valid: number; invalid: number }>(
+    "/jobs/validate-links",
+  );
+  return res.data;
+}
+
 export async function generateResume(jobId: string) {
   const res = await api.post<{
     documentId: string;

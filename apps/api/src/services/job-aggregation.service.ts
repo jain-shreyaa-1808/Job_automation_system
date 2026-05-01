@@ -2,6 +2,7 @@ import { JobModel } from "../models/Job.js";
 import { UserModel } from "../models/User.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { JobMatchingService } from "./job-matching.service.js";
+import { JobLinkValidatorService } from "./job-link-validator.service.js";
 
 type JobSeed = {
   title: string;
@@ -191,6 +192,7 @@ const SAMPLE_JOBS: JobSeed[] = [
 
 export class JobAggregationService {
   private readonly matcher = new JobMatchingService();
+  private readonly linkValidator = new JobLinkValidatorService();
 
   async fetchForUser(userId: string) {
     const [user, profile] = await Promise.all([
@@ -255,7 +257,7 @@ export class JobAggregationService {
     );
 
     // Sort: newest posted first, then fewest applicants (early applicant advantage)
-    return persisted.sort((left, right) => {
+    const sorted = persisted.sort((left, right) => {
       const leftDate = left.postedDate
         ? new Date(left.postedDate).getTime()
         : 0;
@@ -265,5 +267,10 @@ export class JobAggregationService {
       if (rightDate !== leftDate) return rightDate - leftDate;
       return (left.applicantCount ?? 999) - (right.applicantCount ?? 999);
     });
+
+    // Validate links in background — don't block the response
+    this.linkValidator.validateJobsForUser(userId).catch(() => {});
+
+    return sorted;
   }
 }

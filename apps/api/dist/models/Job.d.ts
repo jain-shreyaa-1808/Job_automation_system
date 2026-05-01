@@ -25,9 +25,11 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
     status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
     link: string;
@@ -52,9 +54,11 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
     timestamps: true;
 }>> & import("mongoose").FlatRecord<{
@@ -81,9 +85,11 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps> & {
     _id: Types.ObjectId;
 } & {
@@ -116,9 +122,11 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, {}, {}, {}, import("mongoose").Document<unknown, {}, {
     status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
     link: string;
@@ -143,9 +151,11 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, {}, {
     timestamps: true;
 }> & {
@@ -172,9 +182,11 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps & {
     _id: Types.ObjectId;
 } & {
@@ -205,9 +217,11 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<{
     status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
     link: string;
@@ -232,9 +246,11 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps>, {}, import("mongoose").MergeType<import("mongoose").DefaultSchemaOptions, {
     timestamps: true;
 }>> & import("mongoose").FlatRecord<{
@@ -261,9 +277,11 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
     postedDate?: NativeDate | null | undefined;
+    linkCheckedAt?: NativeDate | null | undefined;
 } & import("mongoose").DefaultTimestampProps> & {
     _id: Types.ObjectId;
 } & {

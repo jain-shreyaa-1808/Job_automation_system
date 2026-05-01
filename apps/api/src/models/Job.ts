@@ -23,6 +23,12 @@ const jobSchema = new Schema(
       enum: ["new", "applied", "in-progress", "finished", "bookmarked"],
       default: "new",
     },
+    linkStatus: {
+      type: String,
+      enum: ["valid", "invalid", "unchecked"],
+      default: "unchecked",
+    },
+    linkCheckedAt: { type: Date },
     discoveredAt: { type: Date, default: Date.now },
   },
   {

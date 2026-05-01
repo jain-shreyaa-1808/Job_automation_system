@@ -2,6 +2,7 @@ import { JobModel } from "../models/Job.js";
 import { UserModel } from "../models/User.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { JobMatchingService } from "./job-matching.service.js";
+import { JobLinkValidatorService } from "./job-link-validator.service.js";
 // Generate postedDate relative to today for realistic sorting
 function daysAgo(n) {
     const d = new Date();
@@ -162,6 +163,7 @@ const SAMPLE_JOBS = [
 ];
 export class JobAggregationService {
     matcher = new JobMatchingService();
+    linkValidator = new JobLinkValidatorService();
     async fetchForUser(userId) {
         const [user, profile] = await Promise.all([
             UserModel.findById(userId),
@@ -207,7 +209,7 @@ export class JobAggregationService {
             });
         }));
         // Sort: newest posted first, then fewest applicants (early applicant advantage)
-        return persisted.sort((left, right) => {
+        const sorted = persisted.sort((left, right) => {
             const leftDate = left.postedDate
                 ? new Date(left.postedDate).getTime()
                 : 0;
@@ -218,6 +220,9 @@ export class JobAggregationService {
                 return rightDate - leftDate;
             return (left.applicantCount ?? 999) - (right.applicantCount ?? 999);
         });
+        // Validate links in background — don't block the response
+        this.linkValidator.validateJobsForUser(userId).catch(() => { });
+        return sorted;
     }
 }
 //# sourceMappingURL=job-aggregation.service.js.map

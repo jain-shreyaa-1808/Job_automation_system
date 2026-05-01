@@ -11,6 +11,7 @@ import {
   fetchJobs,
   listJobs,
   matchJobs,
+  validateLinks,
 } from "../controllers/jobs.controller.js";
 import { generateOutreach } from "../controllers/outreach.controller.js";
 import {
@@ -53,6 +54,7 @@ apiRouter.put("/resume/update", resumeUpload.single("resume"), updateResume);
 apiRouter.post("/jobs/fetch", fetchJobs);
 apiRouter.get("/jobs", listJobs);
 apiRouter.post("/jobs/match", matchJobs);
+apiRouter.post("/jobs/validate-links", validateLinks);
 apiRouter.get("/dashboard", dashboard);
 apiRouter.post(
   "/resume/generate",

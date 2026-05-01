@@ -1,5 +1,6 @@
 export declare class JobAggregationService {
     private readonly matcher;
+    private readonly linkValidator;
     fetchForUser(userId: string): Promise<(import("mongoose").Document<unknown, {}, {
         status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
         link: string;
@@ -24,9 +25,11 @@ export declare class JobAggregationService {
         experienceMax: number;
         employmentType: string;
         applicantCount: number;
+        linkStatus: "valid" | "invalid" | "unchecked";
         discoveredAt: NativeDate;
         externalId?: string | null | undefined;
         postedDate?: NativeDate | null | undefined;
+        linkCheckedAt?: NativeDate | null | undefined;
     } & import("mongoose").DefaultTimestampProps, {}, {
         timestamps: true;
     }> & {
@@ -53,9 +56,11 @@ export declare class JobAggregationService {
         experienceMax: number;
         employmentType: string;
         applicantCount: number;
+        linkStatus: "valid" | "invalid" | "unchecked";
         discoveredAt: NativeDate;
         externalId?: string | null | undefined;
         postedDate?: NativeDate | null | undefined;
+        linkCheckedAt?: NativeDate | null | undefined;
     } & import("mongoose").DefaultTimestampProps & {
         _id: import("mongoose").Types.ObjectId;
     } & {

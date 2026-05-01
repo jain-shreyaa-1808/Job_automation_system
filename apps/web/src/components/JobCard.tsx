@@ -39,6 +39,16 @@ export function JobCard({ job }: JobCardProps) {
                 Early Applicant
               </span>
             )}
+            {job.linkStatus === "valid" && (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                ✓ Link Verified
+              </span>
+            )}
+            {job.linkStatus === "unchecked" && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                ⏳ Checking…
+              </span>
+            )}
           </div>
           <h3 className="mt-3 text-2xl">{job.title}</h3>
           <p className="mt-2 text-sm text-ink/65">{job.company}</p>

@@ -44,7 +44,9 @@ export class AutoApplyService {
       // Professional info
       currentTitle: profile?.experience?.[0]?.title ?? "",
       currentCompany: profile?.experience?.[0]?.company ?? "",
-      totalExperience: this.calculateExperience((profile?.experience ?? []) as any[]),
+      totalExperience: this.calculateExperience(
+        (profile?.experience ?? []) as any[],
+      ),
       skills: profile?.skills ?? [],
       linkedinUrl: user?.linkedinUrl ?? "",
       portfolioUrl: user?.portfolioUrl ?? "",

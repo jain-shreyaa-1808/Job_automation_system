@@ -98,9 +98,7 @@ export function JobDetailsPage() {
               job.status === "applied" ? "pointer-events-none opacity-50" : ""
             }`}
           >
-            {job.status === "applied"
-              ? "Already Applied"
-              : "Queue Auto Apply"}
+            {job.status === "applied" ? "Already Applied" : "Queue Auto Apply"}
           </Link>
         </section>
       </div>

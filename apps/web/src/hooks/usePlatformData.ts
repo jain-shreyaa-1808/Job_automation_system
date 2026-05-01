@@ -10,6 +10,7 @@ import {
   parseResume,
   triggerJobFetch,
   updateSettings,
+  validateJobLinks,
 } from "../lib/api";
 
 export function useDashboardQuery() {
@@ -34,6 +35,17 @@ export function useTriggerJobFetch() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["jobs"] });
       void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useValidateJobLinks() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: validateJobLinks,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
   });
 }

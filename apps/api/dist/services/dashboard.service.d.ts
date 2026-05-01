@@ -25,9 +25,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps, {}, {
                 timestamps: true;
             }> & {
@@ -54,9 +56,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps & {
                 _id: import("mongoose").Types.ObjectId;
             } & {
@@ -86,9 +90,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps, {}, {
                 timestamps: true;
             }> & {
@@ -115,9 +121,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps & {
                 _id: import("mongoose").Types.ObjectId;
             } & {
@@ -147,9 +155,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps, {}, {
                 timestamps: true;
             }> & {
@@ -176,9 +186,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps & {
                 _id: import("mongoose").Types.ObjectId;
             } & {
@@ -208,9 +220,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps, {}, {
                 timestamps: true;
             }> & {
@@ -237,9 +251,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps & {
                 _id: import("mongoose").Types.ObjectId;
             } & {
@@ -269,9 +285,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps, {}, {
                 timestamps: true;
             }> & {
@@ -298,9 +316,11 @@ export declare class DashboardService {
                 experienceMax: number;
                 employmentType: string;
                 applicantCount: number;
+                linkStatus: "valid" | "invalid" | "unchecked";
                 discoveredAt: NativeDate;
                 externalId?: string | null | undefined;
                 postedDate?: NativeDate | null | undefined;
+                linkCheckedAt?: NativeDate | null | undefined;
             } & import("mongoose").DefaultTimestampProps & {
                 _id: import("mongoose").Types.ObjectId;
             } & {

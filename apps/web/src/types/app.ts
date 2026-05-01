@@ -12,6 +12,7 @@ export type Job = {
   postedDate?: string;
   applicantCount?: number;
   status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
+  linkStatus?: "valid" | "invalid" | "unchecked";
 };
 
 export type DashboardResponse = {
