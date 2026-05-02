@@ -5,6 +5,13 @@ type MatchResult = {
     suggestedImprovements: string[];
 };
 export declare class JobMatchingService {
-    match(profileSkills: string[], jobDescription: string): MatchResult;
+    private readonly aiSidecarService;
+    private readonly aiChatService;
+    match(profileSkills: string[], jobDescription: string): Promise<MatchResult>;
+    private matchWithSidecar;
+    private matchWithModel;
+    private matchWithSkills;
+    private normalizeSkillList;
+    private normalizeStringList;
 }
 export {};

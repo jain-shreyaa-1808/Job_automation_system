@@ -28,3 +28,7 @@ export const leadStateSchema = z.object({
   leadId: z.string().min(1),
   state: z.enum(["pending", "action-taken", "finished"]),
 });
+
+export const updateJobStatusSchema = z.object({
+  status: z.enum(["new", "applied", "in-progress", "finished", "bookmarked"]),
+});

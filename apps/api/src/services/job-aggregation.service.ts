@@ -1,198 +1,38 @@
 import { JobModel } from "../models/Job.js";
 import { UserModel } from "../models/User.js";
 import { UserProfileModel } from "../models/UserProfile.js";
+import { env } from "../config/env.js";
+import { AiChatService } from "./ai-chat.service.js";
+import { AiSidecarService } from "./ai-sidecar.service.js";
 import { JobMatchingService } from "./job-matching.service.js";
 import { JobLinkValidatorService } from "./job-link-validator.service.js";
-
-type JobSeed = {
-  title: string;
-  company: string;
-  description: string;
-  link: string;
-  platform: string;
-  location: string;
-  postedDate: string; // ISO date string
-  applicantCount: number;
-};
-
-// Generate postedDate relative to today for realistic sorting
-function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString();
-}
-
-const SAMPLE_JOBS: JobSeed[] = [
-  {
-    title: "Software Development Engineer",
-    company: "Amazon India",
-    description:
-      "Java, Python, AWS, distributed systems, microservices, REST APIs, Docker, Kubernetes, CI/CD, system design. We are looking for SDEs to work on large-scale distributed systems that power Amazon's global infrastructure. You will design and implement high-throughput services.",
-    link: "https://www.amazon.jobs/en/search?base_query=Software+Development+Engineer&loc_query=India",
-    platform: "Amazon Jobs",
-    location: "Bengaluru",
-    postedDate: daysAgo(1),
-    applicantCount: 23,
-  },
-  {
-    title: "Full Stack Developer",
-    company: "Flipkart",
-    description:
-      "React, TypeScript, Node.js, Express, MongoDB, REST APIs, GraphQL, Docker, CI/CD, Agile. Join Flipkart's engineering team building next-generation e-commerce platform. Work on customer-facing features serving millions of users.",
-    link: "https://www.flipkartcareers.com/#!/joblist",
-    platform: "Flipkart Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(0),
-    applicantCount: 8,
-  },
-  {
-    title: "Backend Engineer",
-    company: "Razorpay",
-    description:
-      "Node.js, TypeScript, MongoDB, PostgreSQL, Redis, microservices, Docker, Kubernetes, event-driven architecture. Build scalable payment infrastructure processing millions of transactions daily. Work with cutting-edge fintech stack.",
-    link: "https://razorpay.com/jobs/",
-    platform: "Razorpay Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(2),
-    applicantCount: 45,
-  },
-  {
-    title: "Software Engineer",
-    company: "Google India",
-    description:
-      "C++, Java, Python, distributed systems, algorithms, data structures, large-scale systems, cloud infrastructure. Design, develop, test, deploy, maintain, and improve software across Google's product suite.",
-    link: "https://www.google.com/about/careers/applications/jobs/results/?location=India&q=Software%20Engineer",
-    platform: "Google Careers",
-    location: "Hyderabad",
-    postedDate: daysAgo(3),
-    applicantCount: 120,
-  },
-  {
-    title: "Software Development Engineer II",
-    company: "Microsoft",
-    description:
-      "C#, TypeScript, React, Azure, cloud services, microservices, REST APIs, system design, CI/CD pipelines. Design and deliver world-class cloud solutions. Drive technical direction and deliver high quality products.",
-    link: "https://careers.microsoft.com/v2/global/en/search?q=Software%20Development%20Engineer&l=India",
-    platform: "Microsoft Careers",
-    location: "Hyderabad",
-    postedDate: daysAgo(5),
-    applicantCount: 89,
-  },
-  {
-    title: "Full Stack Engineer",
-    company: "Swiggy",
-    description:
-      "React, Node.js, JavaScript, TypeScript, MongoDB, Redis, AWS, Docker, microservices, real-time systems. Build and scale food delivery and quick commerce platform features serving millions of orders daily.",
-    link: "https://careers.swiggy.com/#/",
-    platform: "Swiggy Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(1),
-    applicantCount: 15,
-  },
-  {
-    title: "Backend Developer",
-    company: "Zerodha",
-    description:
-      "Python, Go, PostgreSQL, Redis, REST APIs, message queues, Linux, performance optimization, fintech. Build India's largest retail stockbroking platform handling millions of orders with ultra-low latency.",
-    link: "https://zerodha.com/careers",
-    platform: "Zerodha Careers",
-    location: "Remote",
-    postedDate: daysAgo(7),
-    applicantCount: 200,
-  },
-  {
-    title: "Software Engineer - Platform",
-    company: "Atlassian",
-    description:
-      "Java, TypeScript, React, AWS, Docker, Kubernetes, microservices, REST APIs, Agile, distributed systems. Help build collaboration tools used by millions of teams worldwide. Shape the future of teamwork.",
-    link: "https://www.atlassian.com/company/careers/all-jobs?location=India&team=Engineering",
-    platform: "Atlassian Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(4),
-    applicantCount: 67,
-  },
-  {
-    title: "Wireless TAC Engineer",
-    company: "Cisco Systems",
-    description:
-      "Wireless networking, TAC workflows, TCP/IP, Cisco IOS, troubleshooting, incident response, CCNA, CCNP. Provide technical support for Cisco wireless products and resolve complex network issues.",
-    link: "https://jobs.cisco.com/jobs/SearchJobs/?21178=%5B169482%5D&21178_format=6020&listFilterMode=1",
-    platform: "Cisco Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(0),
-    applicantCount: 5,
-  },
-  {
-    title: "Network Development Engineer",
-    company: "Cisco Systems",
-    description:
-      "Python, networking, automation, REST APIs, wireless, Cisco IOS, Linux, Docker, scripting, CCNA, CCNP. Develop network automation tools and SDN solutions for next-generation infrastructure.",
-    link: "https://jobs.cisco.com/jobs/SearchJobs/?21178=%5B169482%5D&21178_format=6020&listFilterMode=1&21180=%5B187%5D&21180_format=6022",
-    platform: "Cisco Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(2),
-    applicantCount: 32,
-  },
-  {
-    title: "Software Engineer",
-    company: "Uber India",
-    description:
-      "Java, Go, Python, microservices, distributed systems, Kafka, gRPC, Kubernetes, real-time systems. Build and scale ride-sharing and delivery platforms handling millions of trips globally.",
-    link: "https://www.uber.com/in/en/careers/list/?query=Software%20Engineer&location=IND-Bengaluru",
-    platform: "Uber Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(1),
-    applicantCount: 42,
-  },
-  {
-    title: "Frontend Engineer",
-    company: "Freshworks",
-    description:
-      "React, TypeScript, JavaScript, CSS, HTML, REST APIs, GraphQL, Webpack, testing, accessibility. Build delightful SaaS product experiences for business software used by 60,000+ customers worldwide.",
-    link: "https://www.freshworks.com/company/careers/",
-    platform: "Freshworks Careers",
-    location: "Chennai",
-    postedDate: daysAgo(6),
-    applicantCount: 150,
-  },
-  {
-    title: "Platform Engineer",
-    company: "PhonePe",
-    description:
-      "Java, Spring Boot, Kafka, Redis, MySQL, Kubernetes, Docker, microservices, CI/CD. Build India's leading digital payments platform processing billions of transactions.",
-    link: "https://www.phonepe.com/careers/",
-    platform: "PhonePe Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(3),
-    applicantCount: 78,
-  },
-  {
-    title: "DevOps Engineer",
-    company: "Thoughtworks",
-    description:
-      "Kubernetes, Docker, Terraform, AWS, Azure, CI/CD, Jenkins, GitHub Actions, monitoring, Linux. Enable engineering teams to ship faster with modern cloud infrastructure and automation.",
-    link: "https://www.thoughtworks.com/en-in/careers/jobs",
-    platform: "Thoughtworks Careers",
-    location: "Pune",
-    postedDate: daysAgo(8),
-    applicantCount: 95,
-  },
-  {
-    title: "Technical Consulting Engineer",
-    company: "Cisco Systems",
-    description:
-      "Networking, TCP/IP, routing, switching, CCNA, CCNP, troubleshooting, customer escalations, Cisco IOS, wireless, VPN. Provide expert-level technical support for enterprise networking solutions.",
-    link: "https://jobs.cisco.com/jobs/SearchJobs/?21178=%5B169482%5D&21178_format=6020&listFilterMode=1",
-    platform: "Cisco Careers",
-    location: "Bengaluru",
-    postedDate: daysAgo(0),
-    applicantCount: 3,
-  },
-];
+import {
+  isEarlyApplicantJob,
+  sortJobsByPriority,
+} from "./job-ranking.service.js";
+import { MockJobProvider } from "./job-providers/mock-job-provider.js";
+import { MultiSourceJobProvider } from "./job-providers/multi-source-job-provider.js";
+import { JobEnrichmentService } from "./job-enrichment.service.js";
+import type { JobProvider } from "./job-providers/types.js";
 
 export class JobAggregationService {
+  private readonly aiChat = new AiChatService();
+  private readonly aiSidecar = new AiSidecarService();
   private readonly matcher = new JobMatchingService();
+  private readonly enrichment = new JobEnrichmentService();
   private readonly linkValidator = new JobLinkValidatorService();
+  private readonly experienceInferenceCache = new Map<
+    string,
+    { min: number; max: number }
+  >();
+  private readonly provider: JobProvider =
+    env.JOB_SOURCE_MODE === "remote"
+      ? new MultiSourceJobProvider()
+      : new MockJobProvider();
+
+  get sourceMode() {
+    return this.provider.sourceMode;
+  }
 
   async fetchForUser(userId: string) {
     const [user, profile] = await Promise.all([
@@ -215,23 +55,53 @@ export class JobAggregationService {
           ],
     );
 
-    const preferredKeywords = [...preferredRoles].flatMap((role) =>
-      role.split(/\s+/).filter((w) => w.length > 2),
-    );
-
-    const jobs = SAMPLE_JOBS.filter((job) => {
-      const lowerTitle = job.title.toLowerCase();
-      // Match if any significant keyword from preferred roles appears in the title
-      return preferredKeywords.some((keyword) => lowerTitle.includes(keyword));
-    });
-
     const profileSkills = profile?.skills ?? [];
+    const userExperienceYears = this.calculateExperienceYears(
+      profile?.experience ?? [],
+    );
+    const maxAllowedExperienceMin = Math.max(2, userExperienceYears + 1);
+    const jobs = await this.provider.fetchJobs({
+      preferredRoles: [...preferredRoles],
+      profileSkills,
+    });
 
     const persisted = await Promise.all(
       jobs.map(async (job) => {
-        const matching = this.matcher.match(profileSkills, job.description);
+        const enrichment = this.enrichment.enrich({
+          title: job.title,
+          description: job.description,
+        });
+        const matching = await this.matcher.match(
+          profileSkills,
+          `${job.title} ${job.description}`,
+        );
+        const experienceRange = await this.resolveExperienceRange(
+          job,
+          matching.matchScore,
+        );
+        const postedDate = new Date(job.postedDate);
+        const isQualified = this.isQualifiedForProfile({
+          job,
+          preferredRoles: [...preferredRoles],
+          userExperienceYears,
+          maxAllowedExperienceMin,
+          matchScore: matching.matchScore,
+          matchedSkills: matching.matchedSkills,
+          experienceRange,
+        });
+        const relevanceScore = this.calculateRelevanceScore({
+          baseMatchScore: matching.matchScore,
+          title: job.title,
+          description: job.description,
+          preferredRoles: [...preferredRoles],
+          userExperienceYears,
+          experienceMin: experienceRange.min,
+          experienceMax: experienceRange.max,
+          postedDate,
+          applicantCount: job.applicantCount,
+        });
 
-        return JobModel.findOneAndUpdate(
+        const persistedJob = await JobModel.findOneAndUpdate(
           {
             sourceUserId: userId,
             title: job.title,
@@ -240,12 +110,21 @@ export class JobAggregationService {
           },
           {
             ...job,
+            normalizedTitle: enrichment.normalizedTitle,
+            extractedSkills: enrichment.extractedSkills,
+            categoryTags: enrichment.categoryTags,
             sourceUserId: userId,
-            postedDate: new Date(job.postedDate),
+            postedDate,
             applicantCount: job.applicantCount,
-            relevanceScore: matching.matchScore,
+            relevanceScore,
             matchedSkills: matching.matchedSkills,
             missingSkills: matching.missingSkills,
+            experienceMin: experienceRange.min,
+            experienceMax: experienceRange.max,
+            jobSource: job.sourceMode,
+            linkStatus: "unchecked",
+            linkCheckedAt: null,
+            isProfileFit: isQualified,
           },
           {
             upsert: true,
@@ -253,24 +132,337 @@ export class JobAggregationService {
             setDefaultsOnInsert: true,
           },
         );
+
+        return isQualified ? persistedJob : null;
       }),
     );
 
-    // Sort: newest posted first, then fewest applicants (early applicant advantage)
-    const sorted = persisted.sort((left, right) => {
-      const leftDate = left.postedDate
-        ? new Date(left.postedDate).getTime()
-        : 0;
-      const rightDate = right.postedDate
-        ? new Date(right.postedDate).getTime()
-        : 0;
-      if (rightDate !== leftDate) return rightDate - leftDate;
-      return (left.applicantCount ?? 999) - (right.applicantCount ?? 999);
-    });
+    const candidateJobs = persisted.filter(
+      (job): job is NonNullable<(typeof persisted)[number]> => job !== null,
+    );
 
-    // Validate links in background — don't block the response
-    this.linkValidator.validateJobsForUser(userId).catch(() => {});
+    await this.syncVectorIndex(userId, candidateJobs);
+    await this.applyVectorRelevance(userId, candidateJobs, [
+      ...preferredRoles,
+      ...profileSkills,
+    ]);
+
+    if (this.provider.sourceMode !== "mock") {
+      await this.linkValidator.validateJobsForUser(userId);
+    }
+
+    const sorted = sortJobsByPriority(
+      await JobModel.find({
+        sourceUserId: userId,
+        isProfileFit: true,
+        linkStatus: "valid",
+      }),
+    );
 
     return sorted;
+  }
+
+  private async syncVectorIndex(
+    userId: string,
+    jobs: Array<{
+      _id: string | { toString(): string };
+      title: string;
+      company: string;
+      description: string;
+      location?: string;
+      platform: string;
+      matchedSkills?: string[];
+      extractedSkills?: string[];
+    }>,
+  ) {
+    if (!this.aiSidecar.isConfigured() || jobs.length === 0) {
+      return;
+    }
+
+    try {
+      await this.aiSidecar.upsertJobIndex(
+        userId,
+        jobs.map((job) => ({
+          id: String(job._id),
+          title: job.title,
+          company: job.company,
+          description: job.description,
+          location: job.location ?? "Remote",
+          platform: job.platform,
+          matchedSkills: job.matchedSkills ?? [],
+          extractedSkills: job.extractedSkills ?? [],
+        })),
+      );
+    } catch {
+      // Non-blocking fallback: the existing ranking path still works.
+    }
+  }
+
+  private async applyVectorRelevance(
+    userId: string,
+    jobs: Array<{
+      _id: string | { toString(): string };
+      relevanceScore?: number;
+    }>,
+    queryTerms: string[],
+  ) {
+    if (!this.aiSidecar.isConfigured() || jobs.length === 0) {
+      return;
+    }
+
+    const query = queryTerms
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join(" ");
+    if (!query) {
+      return;
+    }
+
+    try {
+      const response = await this.aiSidecar.searchJobIndex(
+        userId,
+        query,
+        jobs.length,
+      );
+      const scoreMap = new Map(
+        (response?.matches ?? []).map((match) => [match.id, match.score]),
+      );
+
+      await Promise.all(
+        jobs.map((job) => {
+          const vectorScore = scoreMap.get(String(job._id));
+          if (typeof vectorScore !== "number") {
+            return Promise.resolve();
+          }
+
+          const relevanceScore = Math.max(
+            job.relevanceScore ?? 0,
+            Math.min(100, Math.round(vectorScore * 100)),
+          );
+
+          return JobModel.updateOne(
+            { _id: job._id, sourceUserId: userId },
+            { $set: { relevanceScore } },
+          );
+        }),
+      );
+    } catch {
+      // Non-blocking fallback: the existing ranking path still works.
+    }
+  }
+
+  private calculateExperienceYears(
+    experience: Array<{ startDate?: string | null; endDate?: string | null }>,
+  ) {
+    if (!experience.length) {
+      return 0;
+    }
+
+    const validStartYears = experience
+      .map((item) => item.startDate?.match(/\d{4}/)?.[0])
+      .filter((value): value is string => Boolean(value))
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => Number.isFinite(value));
+
+    if (!validStartYears.length) {
+      return 0;
+    }
+
+    const earliestYear = Math.min(...validStartYears);
+    return Math.max(0, new Date().getFullYear() - earliestYear);
+  }
+
+  private extractExperienceRange(text: string) {
+    const normalizedDescription = text.toLowerCase();
+
+    const rangeMatch = normalizedDescription.match(
+      /(\d+)\s*(?:-|to)\s*(\d+)\+?\s*(?:years|yrs)/i,
+    );
+    if (rangeMatch) {
+      const min = Number.parseInt(rangeMatch[1], 10);
+      const max = Number.parseInt(rangeMatch[2], 10);
+      return { range: { min, max }, confident: true };
+    }
+
+    const plusMatch = normalizedDescription.match(/(\d+)\+\s*(?:years|yrs)/i);
+    if (plusMatch) {
+      const min = Number.parseInt(plusMatch[1], 10);
+      return { range: { min, max: min + 2 }, confident: true };
+    }
+
+    if (
+      /entry[ -]?level|junior|graduate|new grad|0 ?- ?2 years|0 to 2 years/i.test(
+        normalizedDescription,
+      )
+    ) {
+      return { range: { min: 0, max: 2 }, confident: true };
+    }
+
+    if (
+      /senior|staff|principal|lead|architect|manager/i.test(
+        normalizedDescription,
+      )
+    ) {
+      return { range: { min: 5, max: 8 }, confident: true };
+    }
+
+    return { range: { min: 0, max: 2 }, confident: false };
+  }
+
+  private async resolveExperienceRange(
+    job: {
+      title: string;
+      description: string;
+      experienceMin?: number;
+      experienceMax?: number;
+      link: string;
+    },
+    matchScore: number,
+  ) {
+    if (
+      Number.isFinite(job.experienceMin) &&
+      Number.isFinite(job.experienceMax) &&
+      (job.experienceMin ?? 0) <= (job.experienceMax ?? 0)
+    ) {
+      return {
+        min: Math.max(0, Math.round(job.experienceMin ?? 0)),
+        max: Math.max(0, Math.round(job.experienceMax ?? 0)),
+      };
+    }
+
+    const heuristic = this.extractExperienceRange(
+      `${job.title} ${job.description}`,
+    );
+    if (heuristic.confident || matchScore < 35 || !this.aiChat.isConfigured()) {
+      return heuristic.range;
+    }
+
+    const cacheKey = `${job.link}:${job.title}`;
+    const cached = this.experienceInferenceCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const response = await this.aiChat.completeJson([
+        {
+          role: "system",
+          content:
+            "Extract the required years of experience for a job. Return valid JSON with numeric keys min and max only. If the job is entry-level or junior, use min 0 and max 2. If no exact range is stated, infer the narrowest reasonable range from the title and description.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            title: job.title,
+            description: job.description,
+          }),
+        },
+      ]);
+
+      const inferred = {
+        min: Math.max(0, Number(response.min) || heuristic.range.min),
+        max: Math.max(0, Number(response.max) || heuristic.range.max),
+      };
+      const sanitized =
+        inferred.max >= inferred.min
+          ? inferred
+          : {
+              min: inferred.min,
+              max: Math.max(inferred.min, heuristic.range.max),
+            };
+      this.experienceInferenceCache.set(cacheKey, sanitized);
+      return sanitized;
+    } catch {
+      return heuristic.range;
+    }
+  }
+
+  private isQualifiedForProfile(input: {
+    job: { title: string; description: string };
+    preferredRoles: string[];
+    userExperienceYears: number;
+    maxAllowedExperienceMin: number;
+    matchScore: number;
+    matchedSkills: string[];
+    experienceRange: { min: number; max: number };
+  }) {
+    const searchableText =
+      `${input.job.title} ${input.job.description}`.toLowerCase();
+    const hasRoleMatch = input.preferredRoles.some((role) =>
+      searchableText.includes(role.toLowerCase()),
+    );
+    const hasSkillMatch =
+      input.matchedSkills.length > 0 || input.matchScore >= 35;
+    const seniorityBlocked =
+      input.userExperienceYears <= 2 &&
+      /senior|staff|principal|lead|architect|manager|director|head/i.test(
+        searchableText,
+      );
+    const experienceBlocked =
+      input.experienceRange.min > input.maxAllowedExperienceMin ||
+      (input.userExperienceYears <= 2 && input.experienceRange.max > 3);
+
+    return (
+      (hasRoleMatch || hasSkillMatch) && !seniorityBlocked && !experienceBlocked
+    );
+  }
+
+  private calculateRelevanceScore(input: {
+    baseMatchScore: number;
+    title: string;
+    description: string;
+    preferredRoles: string[];
+    userExperienceYears: number;
+    experienceMin: number;
+    experienceMax: number;
+    postedDate: Date;
+    applicantCount: number;
+  }) {
+    const searchableText = `${input.title} ${input.description}`.toLowerCase();
+
+    const roleBonus = input.preferredRoles.some((role) =>
+      searchableText.includes(role.toLowerCase()),
+    )
+      ? 25
+      : 0;
+
+    const experienceBonus =
+      input.userExperienceYears >= input.experienceMin &&
+      input.userExperienceYears <= input.experienceMax
+        ? 20
+        : input.userExperienceYears < input.experienceMin
+          ? Math.max(
+              0,
+              20 - (input.experienceMin - input.userExperienceYears) * 8,
+            )
+          : Math.max(
+              0,
+              20 - (input.userExperienceYears - input.experienceMax) * 6,
+            );
+
+    const freshnessBonus = Math.max(
+      0,
+      15 -
+        Math.min(
+          15,
+          Math.floor((Date.now() - input.postedDate.getTime()) / 86_400_000) *
+            3,
+        ),
+    );
+    const earlyApplicantBonus = isEarlyApplicantJob({
+      postedDate: input.postedDate,
+      applicantCount: input.applicantCount,
+    })
+      ? 10
+      : 0;
+
+    return Math.min(
+      100,
+      input.baseMatchScore +
+        roleBonus +
+        experienceBonus +
+        freshnessBonus +
+        earlyApplicantBonus,
+    );
   }
 }

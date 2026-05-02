@@ -1,15 +1,38 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import { SectionHeader } from "../components/SectionHeader";
 import { useJobsQuery } from "../hooks/usePlatformData";
+import type { Job } from "../types/app";
 
 export function JobDetailsPage() {
   const { jobId } = useParams();
-  const { data } = useJobsQuery();
-  const job = data?.find((item) => item._id === jobId) ?? data?.[0];
+  const location = useLocation();
+  const routeJob = (location.state as { job?: Job } | null)?.job;
+  const { data, isLoading, isError, error } = useJobsQuery();
+  const job =
+    (jobId ? data?.find((item) => item._id === jobId) : undefined) ?? routeJob;
+
+  if (isLoading && !job) {
+    return <div className="panel">Loading job details…</div>;
+  }
+
+  if (isError && !job) {
+    return (
+      <div className="panel text-sm text-red-700">
+        {error instanceof Error
+          ? error.message
+          : "Unable to load the selected job right now."}
+      </div>
+    );
+  }
 
   if (!job) {
-    return <div className="panel">No job selected.</div>;
+    return (
+      <div className="panel">
+        No job found for this role. Refresh jobs from the listings page and try
+        Inspect again.
+      </div>
+    );
   }
 
   const daysAgo = job.postedDate
@@ -59,7 +82,15 @@ export function JobDetailsPage() {
             {job.description}
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
-            {job.matchedSkills.map((skill) => (
+            {(job.categoryTags ?? []).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-ember/10 px-3 py-2 text-sm font-semibold text-ember"
+              >
+                {tag}
+              </span>
+            ))}
+            {(job.matchedSkills ?? []).map((skill) => (
               <span
                 key={skill}
                 className="rounded-full bg-moss/10 px-3 py-2 text-sm font-semibold text-moss"
@@ -67,7 +98,7 @@ export function JobDetailsPage() {
                 {skill}
               </span>
             ))}
-            {job.missingSkills.map((skill) => (
+            {(job.missingSkills ?? []).map((skill) => (
               <span
                 key={skill}
                 className="rounded-full bg-ember/10 px-3 py-2 text-sm font-semibold text-ember"
@@ -75,6 +106,17 @@ export function JobDetailsPage() {
                 Gap: {skill}
               </span>
             ))}
+            {(job.extractedSkills ?? [])
+              .filter((skill) => !(job.matchedSkills ?? []).includes(skill))
+              .slice(0, 8)
+              .map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full bg-skywash px-3 py-2 text-sm font-semibold text-ink"
+                >
+                  {skill}
+                </span>
+              ))}
           </div>
         </section>
 

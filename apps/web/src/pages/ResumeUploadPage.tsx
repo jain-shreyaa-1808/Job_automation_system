@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SectionHeader } from "../components/SectionHeader";
 import { useParseResume, useTriggerJobFetch } from "../hooks/usePlatformData";
 import { api } from "../lib/api";
+import { persistQueryData, readPersistedQuery } from "../lib/queryPersistence";
 
 type ResumeProfile = {
   hasResume: boolean;
@@ -46,8 +47,12 @@ export function ResumeUploadPage() {
     queryKey: ["resumeProfile"],
     queryFn: async () => {
       const res = await api.get("/resume/profile");
+      persistQueryData("resumeProfile", res.data);
       return res.data;
     },
+    initialData: () => readPersistedQuery<ResumeProfile>("resumeProfile"),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
   });
 
   const handleUpload = () => {

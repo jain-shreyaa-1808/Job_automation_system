@@ -39,7 +39,7 @@ export class AutoApplyService {
       fullName: user?.fullName ?? profile?.name ?? "",
       email: user?.email ?? "",
       phone: user?.phone ?? "",
-      location: (user?.location ?? profile?.experience?.[0]?.company) ? "" : "",
+      location: user?.location ?? "",
 
       // Professional info
       currentTitle: profile?.experience?.[0]?.title ?? "",
@@ -136,6 +136,10 @@ export class AutoApplyService {
       await queueService.enqueue(JOB_QUEUE_NAMES.autoApply, {
         userId: input.userId,
         jobId: input.jobId,
+        jobLink:
+          application.preFilledData?.jobLink ?? input.applicationData.jobLink,
+        rateLimitPerMinute: 10,
+        captchaFallback: "manual-review",
         applicationData: input.applicationData,
       });
     }

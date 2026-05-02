@@ -7,6 +7,8 @@ import pdfParse from "pdf-parse";
 import { env } from "../config/env.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { extractSkills } from "../utils/skill-normalizer.js";
+import { AiChatService } from "./ai-chat.service.js";
+import { AiSidecarService } from "./ai-sidecar.service.js";
 
 type ParsedResume = {
   name: string;
@@ -31,6 +33,9 @@ type ParsedResume = {
 };
 
 export class ResumeParserService {
+  private readonly aiSidecarService = new AiSidecarService();
+  private readonly aiChatService = new AiChatService();
+
   async parseAndStore(
     userId: string,
     file: Express.Multer.File,
@@ -38,7 +43,8 @@ export class ResumeParserService {
     await mkdir(env.RESUME_STORAGE_DIR, { recursive: true });
 
     const parsedText = await this.extractText(file.path, file.mimetype);
-    const parsedResume = this.structureResume(parsedText);
+    const heuristicResume = this.structureResume(parsedText);
+    const parsedResume = await this.hybridCleanupResume(heuristicResume);
 
     await UserProfileModel.findOneAndUpdate(
       { userId },
@@ -136,6 +142,194 @@ export class ResumeParserService {
       parsedText: text,
       resumeScore: Math.min(100, 45 + skills.length * 5),
     };
+  }
+
+  private async hybridCleanupResume(draftResume: ParsedResume) {
+    if (this.aiSidecarService.isConfigured()) {
+      try {
+        const sidecarResume =
+          await this.aiSidecarService.cleanupResume(draftResume);
+        if (sidecarResume) {
+          return this.mergeResume(draftResume, sidecarResume);
+        }
+      } catch {
+        // Fall through to the local LLM cleanup path.
+      }
+    }
+
+    if (this.aiChatService.isConfigured()) {
+      try {
+        const cleaned = await this.cleanupResumeWithModel(draftResume);
+        if (cleaned) {
+          return this.mergeResume(draftResume, cleaned);
+        }
+      } catch {
+        return draftResume;
+      }
+    }
+
+    return draftResume;
+  }
+
+  private async cleanupResumeWithModel(draftResume: ParsedResume) {
+    const response = await this.aiChatService.completeJson([
+      {
+        role: "system",
+        content:
+          "You normalize parsed resume JSON. Return valid JSON with keys name, skills, projects, experience, education, certifications, parsedText, and resumeScore. Keep fields concise, preserve facts, and do not invent employers, degrees, or dates.",
+      },
+      {
+        role: "user",
+        content: JSON.stringify(draftResume),
+      },
+    ]);
+
+    return this.sanitizeResumeShape(response, draftResume.parsedText);
+  }
+
+  private mergeResume(baseResume: ParsedResume, enrichedResume: ParsedResume) {
+    return {
+      ...baseResume,
+      ...enrichedResume,
+      name: enrichedResume.name || baseResume.name,
+      skills: this.uniqueStrings([
+        ...baseResume.skills,
+        ...enrichedResume.skills,
+      ]),
+      certifications: this.uniqueStrings([
+        ...baseResume.certifications,
+        ...enrichedResume.certifications,
+      ]),
+      projects:
+        enrichedResume.projects.length > 0
+          ? enrichedResume.projects
+          : baseResume.projects,
+      experience:
+        enrichedResume.experience.length > 0
+          ? enrichedResume.experience
+          : baseResume.experience,
+      education:
+        enrichedResume.education.length > 0
+          ? enrichedResume.education
+          : baseResume.education,
+      parsedText: baseResume.parsedText,
+      resumeScore: Math.max(baseResume.resumeScore, enrichedResume.resumeScore),
+    };
+  }
+
+  private sanitizeResumeShape(
+    value: Record<string, unknown>,
+    parsedText: string,
+  ) {
+    const stringValue = (input: unknown) =>
+      typeof input === "string" ? input.trim() : "";
+    const toStringArray = (input: unknown) =>
+      Array.isArray(input)
+        ? [...new Set(input)]
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
+
+    const toProjectArray = (input: unknown) =>
+      Array.isArray(input)
+        ? input
+            .map((item) => {
+              if (!item || typeof item !== "object") {
+                return null;
+              }
+              const candidate = item as Record<string, unknown>;
+              return {
+                name: stringValue(candidate.name),
+                summary: stringValue(candidate.summary),
+                technologies: toStringArray(candidate.technologies),
+              };
+            })
+            .filter(
+              (
+                item,
+              ): item is {
+                name: string;
+                summary: string;
+                technologies: string[];
+              } => Boolean(item && (item.name || item.summary)),
+            )
+        : [];
+
+    const toExperienceArray = (input: unknown) =>
+      Array.isArray(input)
+        ? input
+            .map((item) => {
+              if (!item || typeof item !== "object") {
+                return null;
+              }
+              const candidate = item as Record<string, unknown>;
+              return {
+                company: stringValue(candidate.company),
+                title: stringValue(candidate.title),
+                startDate: stringValue(candidate.startDate),
+                endDate: stringValue(candidate.endDate),
+                summary: stringValue(candidate.summary),
+              };
+            })
+            .filter(
+              (
+                item,
+              ): item is {
+                company: string;
+                title: string;
+                startDate: string;
+                endDate: string;
+                summary: string;
+              } =>
+                Boolean(item && (item.company || item.title || item.summary)),
+            )
+        : [];
+
+    const toEducationArray = (input: unknown) =>
+      Array.isArray(input)
+        ? input
+            .map((item) => {
+              if (!item || typeof item !== "object") {
+                return null;
+              }
+              const candidate = item as Record<string, unknown>;
+              return {
+                institution: stringValue(candidate.institution),
+                degree: stringValue(candidate.degree),
+                startDate: stringValue(candidate.startDate),
+                endDate: stringValue(candidate.endDate),
+              };
+            })
+            .filter(
+              (
+                item,
+              ): item is {
+                institution: string;
+                degree: string;
+                startDate: string;
+                endDate: string;
+              } => Boolean(item && (item.institution || item.degree)),
+            )
+        : [];
+
+    return {
+      name: stringValue(value.name),
+      skills: toStringArray(value.skills),
+      projects: toProjectArray(value.projects),
+      experience: toExperienceArray(value.experience),
+      education: toEducationArray(value.education),
+      certifications: toStringArray(value.certifications),
+      parsedText,
+      resumeScore: Math.max(
+        0,
+        Math.min(100, Math.round(Number(value.resumeScore) || 0)),
+      ),
+    } satisfies ParsedResume;
+  }
+
+  private uniqueStrings(values: string[]) {
+    return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
   }
 
   private splitSections(lines: string[]) {
@@ -356,9 +550,5 @@ export class ResumeParserService {
       .map((line) => line.replace(/^[•\-–]\s*/, "").trim())
       .filter((line) => line.length > 3)
       .slice(0, 5);
-  }
-
-  private extractSection(lines: string[], pattern: RegExp): string[] {
-    return lines.filter((line) => pattern.test(line)).slice(0, 5);
   }
 }

@@ -15,9 +15,12 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -25,6 +28,7 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -44,9 +48,12 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -54,6 +61,7 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -75,9 +83,12 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -85,6 +96,7 @@ declare const jobSchema: Schema<any, import("mongoose").Model<any, any, any, any
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -112,9 +124,12 @@ export declare const JobModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -122,6 +137,7 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -141,9 +157,12 @@ export declare const JobModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -151,6 +170,7 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -172,9 +192,12 @@ export declare const JobModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -182,6 +205,7 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -207,9 +231,12 @@ export declare const JobModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -217,6 +244,7 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -236,9 +264,12 @@ export declare const JobModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -246,6 +277,7 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;
@@ -267,9 +299,12 @@ export declare const JobModel: import("mongoose").Model<{
         isValid?: {} | null | undefined;
     };
     title: string;
+    normalizedTitle: string;
     company: string;
     platform: string;
     location: string;
+    extractedSkills: string[];
+    categoryTags: string[];
     relevanceScore: number;
     matchedSkills: string[];
     missingSkills: string[];
@@ -277,6 +312,7 @@ export declare const JobModel: import("mongoose").Model<{
     experienceMax: number;
     employmentType: string;
     applicantCount: number;
+    jobSource: "mock" | "remote";
     linkStatus: "valid" | "invalid" | "unchecked";
     discoveredAt: NativeDate;
     externalId?: string | null | undefined;

@@ -5,11 +5,16 @@ import pdfParse from "pdf-parse";
 import { env } from "../config/env.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { extractSkills } from "../utils/skill-normalizer.js";
+import { AiChatService } from "./ai-chat.service.js";
+import { AiSidecarService } from "./ai-sidecar.service.js";
 export class ResumeParserService {
+    aiSidecarService = new AiSidecarService();
+    aiChatService = new AiChatService();
     async parseAndStore(userId, file) {
         await mkdir(env.RESUME_STORAGE_DIR, { recursive: true });
         const parsedText = await this.extractText(file.path, file.mimetype);
-        const parsedResume = this.structureResume(parsedText);
+        const heuristicResume = this.structureResume(parsedText);
+        const parsedResume = await this.hybridCleanupResume(heuristicResume);
         await UserProfileModel.findOneAndUpdate({ userId }, {
             userId,
             ...parsedResume,
@@ -83,6 +88,140 @@ export class ResumeParserService {
             parsedText: text,
             resumeScore: Math.min(100, 45 + skills.length * 5),
         };
+    }
+    async hybridCleanupResume(draftResume) {
+        if (this.aiSidecarService.isConfigured()) {
+            try {
+                const sidecarResume = await this.aiSidecarService.cleanupResume(draftResume);
+                if (sidecarResume) {
+                    return this.mergeResume(draftResume, sidecarResume);
+                }
+            }
+            catch {
+                // Fall through to the local LLM cleanup path.
+            }
+        }
+        if (this.aiChatService.isConfigured()) {
+            try {
+                const cleaned = await this.cleanupResumeWithModel(draftResume);
+                if (cleaned) {
+                    return this.mergeResume(draftResume, cleaned);
+                }
+            }
+            catch {
+                return draftResume;
+            }
+        }
+        return draftResume;
+    }
+    async cleanupResumeWithModel(draftResume) {
+        const response = await this.aiChatService.completeJson([
+            {
+                role: "system",
+                content: "You normalize parsed resume JSON. Return valid JSON with keys name, skills, projects, experience, education, certifications, parsedText, and resumeScore. Keep fields concise, preserve facts, and do not invent employers, degrees, or dates.",
+            },
+            {
+                role: "user",
+                content: JSON.stringify(draftResume),
+            },
+        ]);
+        return this.sanitizeResumeShape(response, draftResume.parsedText);
+    }
+    mergeResume(baseResume, enrichedResume) {
+        return {
+            ...baseResume,
+            ...enrichedResume,
+            name: enrichedResume.name || baseResume.name,
+            skills: this.uniqueStrings([
+                ...baseResume.skills,
+                ...enrichedResume.skills,
+            ]),
+            certifications: this.uniqueStrings([
+                ...baseResume.certifications,
+                ...enrichedResume.certifications,
+            ]),
+            projects: enrichedResume.projects.length > 0
+                ? enrichedResume.projects
+                : baseResume.projects,
+            experience: enrichedResume.experience.length > 0
+                ? enrichedResume.experience
+                : baseResume.experience,
+            education: enrichedResume.education.length > 0
+                ? enrichedResume.education
+                : baseResume.education,
+            parsedText: baseResume.parsedText,
+            resumeScore: Math.max(baseResume.resumeScore, enrichedResume.resumeScore),
+        };
+    }
+    sanitizeResumeShape(value, parsedText) {
+        const stringValue = (input) => typeof input === "string" ? input.trim() : "";
+        const toStringArray = (input) => Array.isArray(input)
+            ? [...new Set(input)]
+                .filter((item) => typeof item === "string")
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : [];
+        const toProjectArray = (input) => Array.isArray(input)
+            ? input
+                .map((item) => {
+                if (!item || typeof item !== "object") {
+                    return null;
+                }
+                const candidate = item;
+                return {
+                    name: stringValue(candidate.name),
+                    summary: stringValue(candidate.summary),
+                    technologies: toStringArray(candidate.technologies),
+                };
+            })
+                .filter((item) => Boolean(item && (item.name || item.summary)))
+            : [];
+        const toExperienceArray = (input) => Array.isArray(input)
+            ? input
+                .map((item) => {
+                if (!item || typeof item !== "object") {
+                    return null;
+                }
+                const candidate = item;
+                return {
+                    company: stringValue(candidate.company),
+                    title: stringValue(candidate.title),
+                    startDate: stringValue(candidate.startDate),
+                    endDate: stringValue(candidate.endDate),
+                    summary: stringValue(candidate.summary),
+                };
+            })
+                .filter((item) => Boolean(item && (item.company || item.title || item.summary)))
+            : [];
+        const toEducationArray = (input) => Array.isArray(input)
+            ? input
+                .map((item) => {
+                if (!item || typeof item !== "object") {
+                    return null;
+                }
+                const candidate = item;
+                return {
+                    institution: stringValue(candidate.institution),
+                    degree: stringValue(candidate.degree),
+                    startDate: stringValue(candidate.startDate),
+                    endDate: stringValue(candidate.endDate),
+                };
+            })
+                .filter((item) => Boolean(item && (item.institution || item.degree)))
+            : [];
+        return {
+            name: stringValue(value.name),
+            skills: toStringArray(value.skills),
+            projects: toProjectArray(value.projects),
+            experience: toExperienceArray(value.experience),
+            education: toEducationArray(value.education),
+            certifications: toStringArray(value.certifications),
+            parsedText,
+            resumeScore: Math.max(0, Math.min(100, Math.round(Number(value.resumeScore) || 0))),
+        };
+    }
+    uniqueStrings(values) {
+        return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
     }
     splitSections(lines) {
         const sectionHeaders = {
@@ -244,9 +383,6 @@ export class ResumeParserService {
             .map((line) => line.replace(/^[•\-–]\s*/, "").trim())
             .filter((line) => line.length > 3)
             .slice(0, 5);
-    }
-    extractSection(lines, pattern) {
-        return lines.filter((line) => pattern.test(line)).slice(0, 5);
     }
 }
 //# sourceMappingURL=resume-parser.service.js.map

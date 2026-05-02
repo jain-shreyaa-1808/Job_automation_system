@@ -72,7 +72,7 @@ export const generateResume = asyncHandler(async (request, response) => {
     const result = await optimizerService.generateTailoredResume(request.user.sub, request.body.jobId);
     response.json(result);
 });
-export const downloadResumeTex = asyncHandler(async (request, response) => {
+export const downloadResumePdf = asyncHandler(async (request, response) => {
     const doc = await GeneratedDocumentModel.findById(request.params.id).lean();
     if (!doc || doc.userId.toString() !== request.user.sub) {
         response
@@ -80,10 +80,17 @@ export const downloadResumeTex = asyncHandler(async (request, response) => {
             .json({ message: "Document not found" });
         return;
     }
+    const pdfBase64 = doc.metadata?.pdfBase64;
+    if (typeof pdfBase64 !== "string" || pdfBase64.length === 0) {
+        response
+            .status(StatusCodes.NOT_FOUND)
+            .json({ message: "PDF resume not found" });
+        return;
+    }
     const filename = (doc.title ?? "resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-    response.setHeader("Content-Type", "application/x-latex");
-    response.setHeader("Content-Disposition", `attachment; filename="${filename}.tex"`);
-    response.send(doc.content);
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", `attachment; filename="${filename}.pdf"`);
+    response.send(Buffer.from(pdfBase64, "base64"));
 });
 export const sampleResumeOutput = asyncHandler(async (_request, response) => {
     response.json(parserService.sampleOutput());

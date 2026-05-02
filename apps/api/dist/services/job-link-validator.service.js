@@ -1,4 +1,9 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { JobModel } from "../models/Job.js";
+const execFileAsync = promisify(execFile);
+const LINK_CHECK_USER_AGENT = "Mozilla/5.0 (compatible; JobPilot/1.0; link-checker)";
+const LINK_CHECK_ACCEPT = "text/html,application/xhtml+xml,*/*";
 /**
  * Validates job listing links to ensure they point to active, specific openings
  * rather than generic career pages, 404s, or closed listings.
@@ -37,18 +42,7 @@ export class JobLinkValidatorService {
      */
     async validateUrl(url) {
         try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
-            const response = await fetch(url, {
-                method: "GET",
-                signal: controller.signal,
-                redirect: "follow",
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (compatible; JobPilot/1.0; link-checker)",
-                    Accept: "text/html,application/xhtml+xml,*/*",
-                },
-            });
-            clearTimeout(timeout);
+            const response = await this.loadUrl(url);
             // Check HTTP status
             if (response.status === 404 || response.status === 410) {
                 return {
@@ -72,8 +66,7 @@ export class JobLinkValidatorService {
                 };
             }
             // Sample the body for closed-posting signals (first 50KB)
-            const body = await response.text();
-            const sample = body.slice(0, 50_000);
+            const sample = response.body.slice(0, 50_000);
             const closedMatch = JobLinkValidatorService.CLOSED_POSTING_PATTERNS.find((pattern) => pattern.test(sample));
             if (closedMatch) {
                 return {
@@ -99,6 +92,82 @@ export class JobLinkValidatorService {
             };
         }
     }
+    async loadUrl(url) {
+        try {
+            return await this.loadUrlWithFetch(url);
+        }
+        catch (error) {
+            if (!this.isLocalTlsFetchError(error)) {
+                throw error;
+            }
+            return this.loadUrlWithCurl(url);
+        }
+    }
+    async loadUrlWithFetch(url) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        try {
+            const response = await fetch(url, {
+                method: "GET",
+                signal: controller.signal,
+                redirect: "follow",
+                headers: {
+                    "User-Agent": LINK_CHECK_USER_AGENT,
+                    Accept: LINK_CHECK_ACCEPT,
+                },
+            });
+            return {
+                status: response.status,
+                url: response.url,
+                body: await response.text(),
+            };
+        }
+        finally {
+            clearTimeout(timeout);
+        }
+    }
+    async loadUrlWithCurl(url) {
+        const statusMarker = "__JOBPILOT_STATUS__";
+        const urlMarker = "__JOBPILOT_EFFECTIVE_URL__";
+        const { stdout } = await execFileAsync("curl", [
+            "-sS",
+            "-L",
+            "--max-redirs",
+            "5",
+            "-A",
+            LINK_CHECK_USER_AGENT,
+            "-H",
+            `Accept: ${LINK_CHECK_ACCEPT}`,
+            "-w",
+            `\n${statusMarker}:%{http_code}\n${urlMarker}:%{url_effective}`,
+            url,
+        ]);
+        const statusIndex = stdout.lastIndexOf(`\n${statusMarker}:`);
+        const urlIndex = stdout.lastIndexOf(`\n${urlMarker}:`);
+        if (statusIndex === -1 || urlIndex === -1 || urlIndex < statusIndex) {
+            throw new Error("Unable to parse curl response while validating job link");
+        }
+        const body = stdout.slice(0, statusIndex);
+        const statusLine = stdout
+            .slice(statusIndex + statusMarker.length + 2, urlIndex)
+            .trim();
+        const finalUrl = stdout.slice(urlIndex + urlMarker.length + 2).trim();
+        return {
+            status: Number.parseInt(statusLine, 10),
+            url: finalUrl || url,
+            body,
+        };
+    }
+    isLocalTlsFetchError(error) {
+        if (!(error instanceof Error) || !("cause" in error)) {
+            return false;
+        }
+        const cause = error.cause;
+        if (!cause || typeof cause !== "object" || !("code" in cause)) {
+            return false;
+        }
+        return cause.code === "UNABLE_TO_GET_ISSUER_CERT_LOCALLY";
+    }
     /**
      * Validate all unchecked or stale jobs for a given user.
      * Updates the DB records with linkStatus and linkCheckedAt.
@@ -108,6 +177,7 @@ export class JobLinkValidatorService {
         const staleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000); // re-check after 24h
         const jobs = await JobModel.find({
             sourceUserId: userId,
+            jobSource: { $ne: "mock" },
             $or: [
                 { linkStatus: "unchecked" },
                 { linkStatus: { $exists: false } },

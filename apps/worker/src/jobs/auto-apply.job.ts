@@ -13,7 +13,7 @@ export async function handleAutoApply(job: Job<AutoApplyJobPayload>) {
   );
 
   const result = await runAutoApply({
-    jobLink: `${env.API_BASE_URL}/jobs/${job.data.jobId}`,
+    jobLink: job.data.jobLink,
     rateLimitPerMinute: job.data.rateLimitPerMinute,
     headless: env.PLAYWRIGHT_HEADLESS,
   });

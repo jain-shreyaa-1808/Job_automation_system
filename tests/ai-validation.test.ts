@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
+import { PDFDocument } from "pdf-lib";
 import { createApp } from "../apps/api/src/app.js";
 import { connectDatabase } from "../apps/api/src/lib/database.js";
 
@@ -169,8 +170,6 @@ describe("AI Resume Generation - ATS Compliance", () => {
   let resumeResult: {
     documentId: string;
     latex: string;
-    atsSuggestions: string[];
-    atsKeywordsInjected: string[];
   };
 
   it("generates a tailored resume successfully", async () => {
@@ -182,8 +181,8 @@ describe("AI Resume Generation - ATS Compliance", () => {
     expect(res.status).toBe(200);
     expect(res.body.documentId).toBeDefined();
     expect(res.body.latex).toBeDefined();
-    expect(res.body.atsSuggestions).toBeInstanceOf(Array);
-    expect(res.body.atsKeywordsInjected).toBeInstanceOf(Array);
+    expect(res.body.atsSuggestions).toBeUndefined();
+    expect(res.body.atsKeywordsInjected).toBeUndefined();
     resumeResult = res.body;
   });
 
@@ -202,6 +201,14 @@ describe("AI Resume Generation - ATS Compliance", () => {
   it("targets the specific job title and company", () => {
     expect(resumeResult.latex).toContain("Full Stack Developer");
     expect(resumeResult.latex).toContain("Flipkart");
+  });
+
+  it("uses the compact professional resume template", () => {
+    const { latex } = resumeResult;
+    expect(latex).toContain("\\documentclass[9pt]{article}");
+    expect(latex).toContain("\\usepackage[margin=0.42in]{geometry}");
+    expect(latex).not.toContain("Applying for:");
+    expect(latex).not.toMatch(/  {2,}/);
   });
 
   it("has all required ATS resume sections", () => {
@@ -230,24 +237,8 @@ describe("AI Resume Generation - ATS Compliance", () => {
     expect(skillsSection).toContain("Node.js");
   });
 
-  it("injects ATS keywords from the job description", () => {
-    const { atsKeywordsInjected } = resumeResult;
-    expect(atsKeywordsInjected.length).toBeGreaterThan(0);
-
-    // Should include matched skills
-    const injectedLower = atsKeywordsInjected.map((k) => k.toLowerCase());
-    expect(injectedLower).toEqual(
-      expect.arrayContaining(["react", "typescript", "node.js"]),
-    );
-  });
-
-  it("provides actionable ATS suggestions", () => {
-    const { atsSuggestions } = resumeResult;
-    expect(atsSuggestions.length).toBeGreaterThanOrEqual(2);
-
-    // Should suggest adding missing skills
-    const allSuggestions = atsSuggestions.join(" ").toLowerCase();
-    expect(allSuggestions).toMatch(/keyword|quantif|tailor|ats/i);
+  it("keeps the response focused on the generated resume only", () => {
+    expect(Object.keys(resumeResult).sort()).toEqual(["documentId", "latex"]);
   });
 
   it("includes candidate experience in chronological order", () => {
@@ -282,9 +273,18 @@ describe("AI Resume Generation - ATS Compliance", () => {
       .set("Authorization", `Bearer ${accessToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.headers["content-type"]).toMatch(
-      /text\/x-tex|application\/x-latex|application\/octet/,
-    );
+    expect(res.headers["content-type"]).toMatch(/application\/pdf/);
+    expect(res.headers["content-disposition"]).toMatch(/\.pdf"$/);
+  });
+
+  it("exports the resume as a single-page PDF", async () => {
+    const res = await request(app)
+      .get(`/api/v1/resume/download/${resumeResult.documentId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(200);
+    const pdf = await PDFDocument.load(res.body);
+    expect(pdf.getPageCount()).toBe(1);
   });
 });
 

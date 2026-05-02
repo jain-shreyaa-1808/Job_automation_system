@@ -6,11 +6,13 @@ import {
 } from "../controllers/apply.controller.js";
 import { login, me, signup } from "../controllers/auth.controller.js";
 import { findHr, updateLeadState } from "../controllers/hr.controller.js";
+import { refreshAllJobs } from "../controllers/internal.controller.js";
 import {
   dashboard,
   fetchJobs,
   listJobs,
   matchJobs,
+  updateJobStatus,
   validateLinks,
 } from "../controllers/jobs.controller.js";
 import { generateOutreach } from "../controllers/outreach.controller.js";
@@ -19,13 +21,14 @@ import {
   getResumeProfile,
   parseResume,
   resumeUpload,
-  downloadResumeTex,
+  downloadResumePdf,
   sampleResumeOutput,
   updateResume,
 } from "../controllers/resume.controller.js";
 import { getSalaryInsight } from "../controllers/salary.controller.js";
 import { updateSettings } from "../controllers/settings.controller.js";
 import { requireAuth } from "../middleware/auth.js";
+import { requireInternalToken } from "../middleware/internal-auth.js";
 import { validateBody } from "../middleware/validate.js";
 import { loginSchema, signupSchema } from "../validators/auth.validator.js";
 import {
@@ -35,6 +38,7 @@ import {
   outreachSchema,
   resumeGenerateSchema,
   salarySchema,
+  updateJobStatusSchema,
 } from "../validators/job.validator.js";
 import { settingsSchema } from "../validators/settings.validator.js";
 
@@ -43,6 +47,7 @@ export const apiRouter = Router();
 apiRouter.post("/auth/signup", validateBody(signupSchema), signup);
 apiRouter.post("/auth/login", validateBody(loginSchema), login);
 apiRouter.get("/resume/sample-output", sampleResumeOutput);
+apiRouter.post("/internal/jobs/refresh", requireInternalToken, refreshAllJobs);
 
 apiRouter.use(requireAuth);
 
@@ -53,6 +58,11 @@ apiRouter.get("/resume/profile", getResumeProfile);
 apiRouter.put("/resume/update", resumeUpload.single("resume"), updateResume);
 apiRouter.post("/jobs/fetch", fetchJobs);
 apiRouter.get("/jobs", listJobs);
+apiRouter.patch(
+  "/jobs/:jobId/status",
+  validateBody(updateJobStatusSchema),
+  updateJobStatus,
+);
 apiRouter.post("/jobs/match", matchJobs);
 apiRouter.post("/jobs/validate-links", validateLinks);
 apiRouter.get("/dashboard", dashboard);
@@ -61,7 +71,7 @@ apiRouter.post(
   validateBody(resumeGenerateSchema),
   generateResume,
 );
-apiRouter.get("/resume/download/:id", downloadResumeTex);
+apiRouter.get("/resume/download/:id", downloadResumePdf);
 apiRouter.post("/apply/job", validateBody(applyJobSchema), applyJob);
 apiRouter.post("/apply/confirm", confirmApplication);
 apiRouter.post("/hr/find", validateBody(hrFindSchema), findHr);

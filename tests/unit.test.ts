@@ -6,6 +6,10 @@ import {
   verifyAccessToken,
 } from "../apps/api/src/utils/jwt.js";
 import { AppError } from "../apps/api/src/utils/app-error.js";
+import {
+  isEarlyApplicantJob,
+  sortJobsByPriority,
+} from "../apps/api/src/services/job-ranking.service.js";
 
 describe("Crypto - AES-256-GCM", () => {
   it("encrypts and decrypts a secret correctly", () => {
@@ -104,5 +108,61 @@ describe("AppError", () => {
   it("creates conflict error with 409 status", () => {
     const err = AppError.conflict("Already exists");
     expect(err.statusCode).toBe(409);
+  });
+});
+
+describe("Job Ranking", () => {
+  it("flags early applicant jobs based on recency and low applicant count", () => {
+    expect(
+      isEarlyApplicantJob({
+        postedDate: new Date().toISOString(),
+        applicantCount: 12,
+      }),
+    ).toBe(true);
+
+    expect(
+      isEarlyApplicantJob({
+        postedDate: new Date(Date.now() - 5 * 86_400_000).toISOString(),
+        applicantCount: 12,
+      }),
+    ).toBe(false);
+  });
+
+  it("sorts 90%+ matches ahead of lower-score jobs even when older", () => {
+    const jobs = sortJobsByPriority([
+      {
+        title: "Recent lower match",
+        relevanceScore: 82,
+        postedDate: new Date().toISOString(),
+        applicantCount: 5,
+      },
+      {
+        title: "Older strong match",
+        relevanceScore: 94,
+        postedDate: new Date(Date.now() - 4 * 86_400_000).toISOString(),
+        applicantCount: 80,
+      },
+    ]);
+
+    expect(jobs[0].title).toBe("Older strong match");
+  });
+
+  it("sorts early applicant jobs ahead of similar-score older jobs", () => {
+    const jobs = sortJobsByPriority([
+      {
+        title: "Older role",
+        relevanceScore: 88,
+        postedDate: new Date(Date.now() - 6 * 86_400_000).toISOString(),
+        applicantCount: 10,
+      },
+      {
+        title: "Fresh early role",
+        relevanceScore: 88,
+        postedDate: new Date(Date.now() - 86_400_000).toISOString(),
+        applicantCount: 8,
+      },
+    ]);
+
+    expect(jobs[0].title).toBe("Fresh early role");
   });
 });

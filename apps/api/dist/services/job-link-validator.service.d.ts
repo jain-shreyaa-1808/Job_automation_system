@@ -15,6 +15,10 @@ export declare class JobLinkValidatorService {
         valid: boolean;
         reason: string;
     }>;
+    private loadUrl;
+    private loadUrlWithFetch;
+    private loadUrlWithCurl;
+    private isLocalTlsFetchError;
     /**
      * Validate all unchecked or stale jobs for a given user.
      * Updates the DB records with linkStatus and linkCheckedAt.

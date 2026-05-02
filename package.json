@@ -10,6 +10,7 @@
     "build": "npm run build --workspaces",
     "dev": "npm run dev --workspace @job-automation/api",
     "dev:web": "npm run dev --workspace @job-automation/web",
+    "dev:ai-sidecar": "uvicorn --app-dir apps/ai-sidecar main:app --reload --host 127.0.0.1 --port 8010",
     "dev:all": "npm run dev --workspace @job-automation/api & npm run dev --workspace @job-automation/web",
     "lint": "npm run lint --workspaces",
     "format": "prettier --write .",

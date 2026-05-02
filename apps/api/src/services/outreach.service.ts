@@ -3,6 +3,7 @@ import { JobModel } from "../models/Job.js";
 import { RecruiterLeadModel } from "../models/RecruiterLead.js";
 import { UserProfileModel } from "../models/UserProfile.js";
 import { AppError } from "../utils/app-error.js";
+import { AiChatService } from "./ai-chat.service.js";
 
 type OutreachProfile = {
   name: string;
@@ -25,6 +26,8 @@ type OutreachJob = {
 };
 
 export class OutreachService {
+  private readonly aiChatService = new AiChatService();
+
   async generate(userId: string, jobId: string, recruiterLeadId?: string) {
     const [profile, job, lead] = await Promise.all([
       UserProfileModel.findOne({ userId }).lean<OutreachProfile | null>(),
@@ -62,13 +65,13 @@ export class OutreachService {
       jdKeywords,
     );
 
-    // Build JD-aware cold email
-    const email = this.buildColdEmail({
+    const aiDrafts = await this.generateWithModel({
       recipientName: hrName,
       recipientTitle: hrTitle,
       senderName: profile.name,
       company: job.company,
       jobTitle: job.title,
+      description: job.description,
       topSkills,
       bestProject,
       bestExperience,
@@ -76,25 +79,42 @@ export class OutreachService {
       certifications: profile.certifications,
     });
 
-    // Build JD-aware LinkedIn message
-    const linkedinMessage = this.buildLinkedInMessage({
-      recipientName: hrName,
-      senderName: profile.name,
-      company: job.company,
-      jobTitle: job.title,
-      topSkills,
-      bestProject,
-      bestExperience,
-    });
+    const email =
+      aiDrafts?.email ??
+      this.buildColdEmail({
+        recipientName: hrName,
+        recipientTitle: hrTitle,
+        senderName: profile.name,
+        company: job.company,
+        jobTitle: job.title,
+        topSkills,
+        bestProject,
+        bestExperience,
+        matchedSkills: job.matchedSkills ?? [],
+        certifications: profile.certifications,
+      });
 
-    // Build referral request message
-    const referralMessage = this.buildReferralMessage({
-      senderName: profile.name,
-      company: job.company,
-      jobTitle: job.title,
-      topSkills,
-      bestExperience,
-    });
+    const linkedinMessage =
+      aiDrafts?.linkedinMessage ??
+      this.buildLinkedInMessage({
+        recipientName: hrName,
+        senderName: profile.name,
+        company: job.company,
+        jobTitle: job.title,
+        topSkills,
+        bestProject,
+        bestExperience,
+      });
+
+    const referralMessage =
+      aiDrafts?.referralMessage ??
+      this.buildReferralMessage({
+        senderName: profile.name,
+        company: job.company,
+        jobTitle: job.title,
+        topSkills,
+        bestExperience,
+      });
 
     await GeneratedDocumentModel.insertMany([
       {
@@ -125,6 +145,61 @@ export class OutreachService {
       linkedinMessage,
       referralMessage,
     };
+  }
+
+  private async generateWithModel(params: {
+    recipientName: string;
+    recipientTitle: string;
+    senderName: string;
+    company: string;
+    jobTitle: string;
+    description: string;
+    topSkills: string[];
+    bestProject: OutreachProfile["projects"][0] | null;
+    bestExperience: OutreachProfile["experience"][0] | null;
+    matchedSkills: string[];
+    certifications: string[];
+  }) {
+    if (!this.aiChatService.isConfigured()) {
+      return null;
+    }
+
+    try {
+      const response = await this.aiChatService.completeJson([
+        {
+          role: "system",
+          content:
+            "You generate concise professional outreach drafts. Return valid JSON with keys email, linkedinMessage, and referralMessage. Do not include markdown fences.",
+        },
+        {
+          role: "user",
+          content: JSON.stringify(params),
+        },
+      ]);
+
+      const email =
+        typeof response.email === "string" ? response.email.trim() : "";
+      const linkedinMessage =
+        typeof response.linkedinMessage === "string"
+          ? response.linkedinMessage.trim()
+          : "";
+      const referralMessage =
+        typeof response.referralMessage === "string"
+          ? response.referralMessage.trim()
+          : "";
+
+      if (!email || !linkedinMessage || !referralMessage) {
+        return null;
+      }
+
+      return {
+        email,
+        linkedinMessage,
+        referralMessage,
+      };
+    } catch {
+      return null;
+    }
   }
 
   private extractJDKeywords(description: string): string[] {

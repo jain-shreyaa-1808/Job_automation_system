@@ -1,6 +1,10 @@
 export declare class JobAggregationService {
+    private readonly aiSidecar;
     private readonly matcher;
+    private readonly enrichment;
     private readonly linkValidator;
+    private readonly provider;
+    get sourceMode(): import("./job-providers/types.js").JobSourceMode;
     fetchForUser(userId: string): Promise<(import("mongoose").Document<unknown, {}, {
         status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
         link: string;
@@ -15,9 +19,12 @@ export declare class JobAggregationService {
             isValid?: {} | null | undefined;
         };
         title: string;
+        normalizedTitle: string;
         company: string;
         platform: string;
         location: string;
+        extractedSkills: string[];
+        categoryTags: string[];
         relevanceScore: number;
         matchedSkills: string[];
         missingSkills: string[];
@@ -25,6 +32,7 @@ export declare class JobAggregationService {
         experienceMax: number;
         employmentType: string;
         applicantCount: number;
+        jobSource: "mock" | "remote";
         linkStatus: "valid" | "invalid" | "unchecked";
         discoveredAt: NativeDate;
         externalId?: string | null | undefined;
@@ -46,9 +54,12 @@ export declare class JobAggregationService {
             isValid?: {} | null | undefined;
         };
         title: string;
+        normalizedTitle: string;
         company: string;
         platform: string;
         location: string;
+        extractedSkills: string[];
+        categoryTags: string[];
         relevanceScore: number;
         matchedSkills: string[];
         missingSkills: string[];
@@ -56,6 +67,7 @@ export declare class JobAggregationService {
         experienceMax: number;
         employmentType: string;
         applicantCount: number;
+        jobSource: "mock" | "remote";
         linkStatus: "valid" | "invalid" | "unchecked";
         discoveredAt: NativeDate;
         externalId?: string | null | undefined;
@@ -66,4 +78,9 @@ export declare class JobAggregationService {
     } & {
         __v: number;
     })[]>;
+    private syncVectorIndex;
+    private applyVectorRelevance;
+    private calculateExperienceYears;
+    private extractExperienceRange;
+    private calculateRelevanceScore;
 }

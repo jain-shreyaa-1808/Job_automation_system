@@ -1,9 +1,24 @@
 import axios from "axios";
 
-import type { DashboardResponse, Job } from "../types/app";
+import type { DashboardResponse, Job, JobStatus } from "../types/app";
+
+function resolveApiBaseUrl() {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    const { hostname } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:4000/api/v1";
+    }
+  }
+
+  return "/api/v1";
+}
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "/api/v1",
+  baseURL: resolveApiBaseUrl(),
 });
 
 // Attach token to every request
@@ -33,11 +48,21 @@ export async function fetchDashboard() {
   return res.data;
 }
 
-export async function fetchJobs(status?: string) {
+export async function fetchJobs(status?: string, platform?: string) {
   const res = await api.get<{ jobs: Job[] }>("/jobs", {
-    params: status ? { status } : undefined,
+    params: {
+      ...(status ? { status } : {}),
+      ...(platform ? { platform } : {}),
+    },
   });
   return res.data.jobs;
+}
+
+export async function updateJobStatus(jobId: string, status: JobStatus) {
+  const res = await api.patch<{ job: Job }>(`/jobs/${jobId}/status`, {
+    status,
+  });
+  return res.data.job;
 }
 
 export async function triggerJobFetch() {
@@ -56,8 +81,6 @@ export async function generateResume(jobId: string) {
   const res = await api.post<{
     documentId: string;
     latex: string;
-    atsSuggestions: string[];
-    atsKeywordsInjected: string[];
   }>("/resume/generate", { jobId });
   return res.data;
 }

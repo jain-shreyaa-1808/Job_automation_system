@@ -9,19 +9,23 @@ import { healthRouter } from "./routes/health.routes.js";
 export function createApp() {
     const app = express();
     app.use(helmet());
+    const localDevOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
     // Production-ready CORS configuration
     const allowedOrigins = [
         env.FRONTEND_URL,
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ];
-    app.use(cors({
+    const corsOptions = {
         origin: (origin, callback) => {
             // Allow requests with no origin (mobile apps, curl, server-to-server)
             if (!origin)
                 return callback(null, true);
-            // Allow configured origins and any *.onrender.com deployment
+            // Allow configured origins, any local dev origin, and common static hosts
             if (allowedOrigins.includes(origin) ||
+                localDevOriginPattern.test(origin) ||
                 /\.onrender\.com$/.test(origin) ||
                 /\.vercel\.app$/.test(origin) ||
                 /\.netlify\.app$/.test(origin)) {
@@ -39,10 +43,11 @@ export function createApp() {
             "Origin",
         ],
         exposedHeaders: ["Content-Disposition"],
-        maxAge: 86400, // Cache preflight for 24 hours
-    }));
+        maxAge: 86400,
+    };
+    app.use(cors(corsOptions));
     // Explicitly handle OPTIONS preflight requests
-    app.options("*", cors());
+    app.options("*", cors(corsOptions));
     app.use(express.json({ limit: "5mb" }));
     app.use(express.urlencoded({ extended: true }));
     app.use((request, _response, next) => {

@@ -141,11 +141,35 @@ Production-oriented monorepo for an AI-powered job search workflow focused on ea
 
 ## AI and Automation Notes
 
-- Resume parsing currently extracts text from PDF and DOCX, then structures the profile heuristically while preserving the raw parsed text for future model-based enrichment.
-- Job matching uses normalized skill extraction and overlap scoring for relevance, missing skills, and improvement hints.
+- Resume parsing now supports a hybrid pipeline: file extraction in Node, structural parsing in the API, optional spaCy enrichment in the local AI sidecar, and optional LLM JSON cleanup before persisting the profile.
+- Job matching now prefers semantic scoring from the local AI sidecar using `sentence-transformers` and FAISS, falls back to the configured chat model, and only then falls back to deterministic skill overlap.
 - Resume tailoring generates LaTeX output per target role and stores ATS-oriented suggestions alongside the document.
-- Outreach generation produces cold-email and LinkedIn message drafts from job and recruiter context.
+- Outreach generation and resume summary refinement use an OpenAI-compatible chat completions endpoint when `AI_MODEL_API_URL` is configured. Local Ollama works out of the box with this path.
 - Worker automation uses Playwright selectors, request throttling, and CAPTCHA fallback to manual review.
+
+### Using Local Ollama + Gemma
+
+- Set `AI_MODEL_API_URL=http://127.0.0.1:11434/v1/chat/completions`.
+- Set `AI_MODEL_NAME=gemma3:4b`.
+- `AI_MODEL_API_KEY` can be left blank for local Ollama.
+- Set `AI_SIDECAR_URL=http://127.0.0.1:8010` to enable semantic matching and hybrid resume cleanup.
+- Install and run the sidecar with `npm run dev:ai-sidecar` after creating a Python environment and installing `apps/ai-sidecar/requirements.txt`.
+
+### Using Groq
+
+- Groq works with the current outreach integration because the API client is OpenAI-compatible.
+- Set `AI_MODEL_API_URL=https://api.groq.com/openai/v1/chat/completions`.
+- Set `AI_MODEL_API_KEY` to your Groq API key.
+- Set `AI_MODEL_NAME` to a Groq chat model such as `llama-3.1-8b-instant` or `llama-3.3-70b-versatile`.
+- With these variables set, outreach generation will use Groq. Without them, the backend falls back to the heuristic generator.
+- Groq can improve parsing, outreach, and resume tailoring text generation, but it does not solve job ingestion by itself. Real job fetching still requires `JOB_SOURCE_MODE=remote` plus a real provider endpoint in `JOB_PROVIDER_URL`.
+
+## Job Source Modes
+
+- `JOB_SOURCE_MODE=mock`: uses built-in demo jobs and skips link validation so demo listings remain visible.
+- `JOB_SOURCE_MODE=remote`: uses the built-in free Remote OK feed by default, then filters and normalizes listings against the user's preferred roles and skills.
+- `JOB_PROVIDER_URL`: optional override for `JOB_SOURCE_MODE=remote`. If set, the backend will fetch from that URL instead of Remote OK. The custom feed should return either a JSON array of jobs or `{ "jobs": [...] }`.
+- `GET /api/v1/jobs` and `POST /api/v1/jobs/fetch` include `sourceMode` and `isMockData` so the client can surface whether listings are demo data.
 
 ## Frontend Pages
 
@@ -201,6 +225,11 @@ Production-oriented monorepo for an AI-powered job search workflow focused on ea
 4. Run the API with `npm run dev --workspace @job-automation/api`.
 5. Run the worker with `npm run dev --workspace @job-automation/worker`.
 6. Run the web client with `npm run dev --workspace @job-automation/web`.
+7. For the free local AI stack, start Ollama and then run `npm run dev:ai-sidecar`.
+
+Keep `JOB_SOURCE_MODE=mock` for demo data.
+Set `JOB_SOURCE_MODE=remote` to enable real listings from the built-in free feed.
+Set `JOB_PROVIDER_URL` only if you want to replace the built-in provider with your own JSON feed.
 
 ## Production Deployment Guide
 
@@ -231,7 +260,7 @@ Production-oriented monorepo for an AI-powered job search workflow focused on ea
 ## Future Enhancements
 
 - Provider-specific adapters for Naukri, Foundit, Greenhouse, and direct careers pages.
-- Model-backed resume parsing and semantic similarity using Hugging Face inference or local embedding services.
+- Larger vector indexes and background embedding refresh jobs for semantic search at scale.
 - PDF rendering from LaTeX in the worker.
 - Browser extension for saved jobs and manual handoff.
 - Notification jobs for daily alerts and interview-prep digests.

@@ -6,14 +6,21 @@ export type Job = {
   link: string;
   platform: string;
   location: string;
+  normalizedTitle?: string;
+  extractedSkills: string[];
+  categoryTags: string[];
   relevanceScore: number;
   matchedSkills: string[];
   missingSkills: string[];
   postedDate?: string;
   applicantCount?: number;
+  experienceMin?: number;
+  experienceMax?: number;
   status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
   linkStatus?: "valid" | "invalid" | "unchecked";
 };
+
+export type JobStatus = Job["status"];
 
 export type DashboardResponse = {
   tabs: {

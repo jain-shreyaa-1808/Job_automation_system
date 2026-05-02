@@ -6,5 +6,5 @@ export declare const getResumeProfile: (request: import("express").Request, resp
 /** PUT /resume/profile — update the resume by re-uploading (replaces old one) */
 export declare const updateResume: (request: import("express").Request, response: import("express").Response, next: import("express").NextFunction) => void;
 export declare const generateResume: (request: import("express").Request, response: import("express").Response, next: import("express").NextFunction) => void;
-export declare const downloadResumeTex: (request: import("express").Request, response: import("express").Response, next: import("express").NextFunction) => void;
+export declare const downloadResumePdf: (request: import("express").Request, response: import("express").Response, next: import("express").NextFunction) => void;
 export declare const sampleResumeOutput: (request: import("express").Request, response: import("express").Response, next: import("express").NextFunction) => void;

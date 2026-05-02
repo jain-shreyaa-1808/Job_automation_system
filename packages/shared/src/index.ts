@@ -15,6 +15,7 @@ export type JobQueueName =
 export type AutoApplyJobPayload = {
   userId: string;
   jobId: string;
+  jobLink: string;
   rateLimitPerMinute: number;
   captchaFallback: "manual-review";
 };

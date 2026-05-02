@@ -125,6 +125,8 @@ describe("End-to-End: Complete User Journey", () => {
       platform: "naukri",
       status: "new",
       relevanceScore: 85,
+      isProfileFit: true,
+      linkStatus: "valid",
     });
     testJobId = job._id.toString();
 
@@ -184,9 +186,9 @@ describe("End-to-End: Complete User Journey", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.latex).toContain("TestCorp");
-    expect(res.body.atsSuggestions).toBeInstanceOf(Array);
     expect(res.body.documentId).toBeDefined();
-    expect(res.body.atsKeywordsInjected).toBeInstanceOf(Array);
+    expect(res.body.atsSuggestions).toBeUndefined();
+    expect(res.body.atsKeywordsInjected).toBeUndefined();
   });
 
   it("Step 9: User applies for the job", async () => {

@@ -45,7 +45,7 @@ export function ResumeOptimizerPage() {
     }
   };
 
-  const handleDownloadTex = async () => {
+  const handleDownloadPdf = async () => {
     const docId = generateResume.data?.documentId;
     if (!docId) return;
     const res = await api.get(`/resume/download/${docId}`, {
@@ -54,7 +54,7 @@ export function ResumeOptimizerPage() {
     const url = URL.createObjectURL(res.data as Blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `resume-${selectedJob?.company ?? "tailored"}.tex`;
+    a.download = `resume-${selectedJob?.company ?? "tailored"}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -63,8 +63,8 @@ export function ResumeOptimizerPage() {
     <div>
       <SectionHeader
         eyebrow="Resume Optimizer"
-        title="ATS-Optimised Resume Refinement"
-        description="Select a job — we'll refine your existing resume with ATS keywords from the job description, reorder skills & projects by relevance, and generate a download-ready LaTeX file."
+        title="Apply-Ready Resume"
+        description="Select a job and generate a polished one-page resume PDF that is ready to send."
       />
 
       <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
@@ -101,9 +101,6 @@ export function ResumeOptimizerPage() {
                     >
                       <span className="font-medium">{job.title}</span>
                       <span className="ml-2 text-ink/50">@ {job.company}</span>
-                      <span className="ml-auto float-right text-xs text-moss">
-                        {job.relevanceScore}%
-                      </span>
                     </button>
                   </li>
                 ))}
@@ -129,14 +126,6 @@ export function ResumeOptimizerPage() {
                     {s}
                   </span>
                 ))}
-                {selectedJob.missingSkills.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full bg-ember/10 px-2 py-0.5 text-xs text-ember"
-                  >
-                    gap: {s}
-                  </span>
-                ))}
               </div>
             </div>
           )}
@@ -148,44 +137,21 @@ export function ResumeOptimizerPage() {
             onClick={() => generateResume.mutate(jobId)}
           >
             {generateResume.isPending
-              ? "Refining your resume…"
-              : "Refine Resume for this Job"}
+              ? "Preparing your resume…"
+              : "Generate Resume PDF"}
           </button>
         </section>
 
         <section className="panel space-y-4">
           {generateResume.data ? (
             <>
-              {/* ATS keywords injected */}
-              {generateResume.data.atsKeywordsInjected &&
-                generateResume.data.atsKeywordsInjected.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-ink/70">
-                      ATS Keywords Injected
-                    </h3>
-                    <div className="flex flex-wrap gap-1">
-                      {generateResume.data.atsKeywordsInjected.map(
-                        (k: string) => (
-                          <span
-                            key={k}
-                            className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-700"
-                          >
-                            {k}
-                          </span>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                )}
-
-              {/* Download / copy actions */}
               <div className="flex gap-2">
                 <button
                   type="button"
                   className="button-primary flex-1"
-                  onClick={handleDownloadTex}
+                  onClick={handleDownloadPdf}
                 >
-                  ↓ Download .tex File
+                  ↓ Download PDF
                 </button>
                 <button
                   type="button"
@@ -200,26 +166,11 @@ export function ResumeOptimizerPage() {
               <pre className="max-h-[500px] overflow-auto whitespace-pre-wrap break-words rounded-3xl bg-ink p-5 text-xs leading-6 text-white">
                 {generateResume.data.latex}
               </pre>
-
-              {/* ATS Suggestions */}
-              {generateResume.data.atsSuggestions &&
-                generateResume.data.atsSuggestions.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-ink/70">
-                      ATS Optimisation Tips
-                    </h3>
-                    <ul className="list-inside list-disc space-y-1 text-sm text-ink/75">
-                      {generateResume.data.atsSuggestions.map((s: string) => (
-                        <li key={s}>{s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
             </>
           ) : (
             <div className="flex h-64 items-center justify-center text-ink/40">
-              Select a role and click &ldquo;Refine Resume&rdquo; to see your
-              ATS-optimised LaTeX resume here.
+              Select a role and click &ldquo;Generate Resume PDF&rdquo; to
+              prepare your application-ready resume.
             </div>
           )}
         </section>

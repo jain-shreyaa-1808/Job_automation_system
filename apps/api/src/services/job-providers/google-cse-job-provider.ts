@@ -1,0 +1,112 @@
+import { env } from "../../config/env.js";
+import type { JobProvider, JobProviderContext, ProviderJob } from "./types.js";
+
+type GoogleCseResponse = {
+  items?: Array<{
+    title?: string;
+    link?: string;
+    snippet?: string;
+    displayLink?: string;
+    pagemap?: {
+      metatags?: Array<Record<string, string>>;
+    };
+  }>;
+};
+
+const DEFAULT_TARGET_SITES = [
+  "indeed.com",
+  "naukri.com",
+  "foundit.in",
+  "hirist.tech",
+  "cutshort.io",
+  "instahyre.com",
+  "boards.greenhouse.io",
+];
+
+export class GoogleCseJobProvider implements JobProvider {
+  readonly sourceMode = "remote" as const;
+
+  async fetchJobs({
+    preferredRoles,
+    profileSkills,
+  }: JobProviderContext): Promise<ProviderJob[]> {
+    if (!env.GOOGLE_CSE_API_KEY || !env.GOOGLE_CSE_ENGINE_ID) {
+      return [] as ProviderJob[];
+    }
+
+    const targetSites = (env.GOOGLE_CSE_TARGET_SITES ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const sites = targetSites.length > 0 ? targetSites : DEFAULT_TARGET_SITES;
+    const query = this.buildQuery(preferredRoles, profileSkills, sites);
+
+    const url = new URL("https://customsearch.googleapis.com/customsearch/v1");
+    url.searchParams.set("key", env.GOOGLE_CSE_API_KEY);
+    url.searchParams.set("cx", env.GOOGLE_CSE_ENGINE_ID);
+    url.searchParams.set("q", query);
+    url.searchParams.set("num", "10");
+
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      return [] as ProviderJob[];
+    }
+
+    const payload = (await response.json()) as GoogleCseResponse;
+    const jobs: Array<ProviderJob | null> = (payload.items ?? []).map((item) =>
+      this.mapResult(item),
+    );
+    return jobs.filter((job): job is ProviderJob => job !== null);
+  }
+
+  private buildQuery(
+    preferredRoles: string[],
+    profileSkills: string[],
+    sites: string[],
+  ) {
+    const roleTerm =
+      preferredRoles.find((role) => role.trim().length > 0) ??
+      "software engineer";
+    const skillTerm = profileSkills.slice(0, 3).join(" OR ");
+    const siteQuery = sites.map((site) => `site:${site}`).join(" OR ");
+    return `${roleTerm} remote jobs (${siteQuery}) ${skillTerm}`.trim();
+  }
+
+  private mapResult(
+    item: NonNullable<GoogleCseResponse["items"]>[number],
+  ): ProviderJob | null {
+    if (!item.title || !item.link) {
+      return null;
+    }
+
+    const cleanedTitle = item.title.replace(/\s*[-|].*$/, "").trim();
+    const description = item.snippet?.trim() || cleanedTitle;
+    const displayLink = item.displayLink?.trim() || new URL(item.link).hostname;
+    const meta = item.pagemap?.metatags?.[0] ?? {};
+    const location = meta["og:locality"] || meta["job_location"] || "Remote";
+
+    return {
+      title: cleanedTitle,
+      company: this.inferCompany(displayLink),
+      description,
+      link: item.link,
+      platform: "Google CSE",
+      location,
+      postedDate: new Date().toISOString(),
+      applicantCount: 0,
+      sourceMode: this.sourceMode,
+    } satisfies ProviderJob;
+  }
+
+  private inferCompany(displayLink: string) {
+    const hostname =
+      displayLink.replace(/^www\./, "").split(".")[0] ?? displayLink;
+    return hostname
+      .split(/[-_]/)
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(" ");
+  }
+}
