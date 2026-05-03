@@ -91,7 +91,9 @@ export class OutreachService {
       recruiterName?: string;
     },
   ) {
-    const profile = await UserProfileModel.findOne({ userId }).lean<OutreachProfile | null>();
+    const profile = await UserProfileModel.findOne({
+      userId,
+    }).lean<OutreachProfile | null>();
 
     if (!profile) {
       throw AppError.notFound("Profile not found");
@@ -219,7 +221,7 @@ export class OutreachService {
         {
           role: "system",
           content:
-            "You generate concise professional outreach drafts. Return valid JSON with keys email, linkedinMessage, and referralMessage. Do not include markdown fences.",
+            "You generate concise professional outreach drafts. The email must sound like a candidate reaching out to HR or a recruiter, sharing their resume and asking to be considered for the open role. The referralMessage must sound like a candidate asking an employee at the company for a referral to the specific open job posting. Return valid JSON with keys email, linkedinMessage, and referralMessage. Do not include markdown fences.",
         },
         {
           role: "user",
@@ -385,8 +387,8 @@ export class OutreachService {
 
     const skillHighlight =
       topSkills.length > 0
-        ? `My expertise spans ${topSkills.join(", ")}, which directly aligns with the requirements outlined in the ${jobTitle} posting.`
-        : `My technical background aligns well with the ${jobTitle} requirements.`;
+        ? `I am reaching out to share my resume for the ${jobTitle} opening at ${company}. My background includes ${topSkills.join(", ")}, which aligns closely with the requirements listed for the role.`
+        : `I am reaching out to share my resume for the ${jobTitle} opening at ${company}, as my technical background aligns well with the role requirements.`;
 
     const experienceParagraph = bestExperience
       ? `In my role as ${bestExperience.title ?? "engineer"} at ${bestExperience.company ?? "my previous company"}, I ${bestExperience.summary ? bestExperience.summary.split(".")[0].toLowerCase().replace(/^i /, "") : "delivered impactful solutions that drove measurable results"}.`
@@ -401,15 +403,15 @@ export class OutreachService {
         ? `\n\nI also hold ${certifications.slice(0, 2).join(" and ")} certification${certifications.length > 1 ? "s" : ""}, which reinforces my commitment to professional growth.`
         : "";
 
-    return `Subject: Application for ${jobTitle} — ${senderName}
+    return `Subject: Resume for ${jobTitle} opportunity at ${company} — ${senderName}
 
 ${greeting}
 
-I am writing to express my strong interest in the ${jobTitle} position at ${company}. ${skillHighlight}
+  I am writing to express my interest in the ${jobTitle} position at ${company}. ${skillHighlight}
 
 ${experienceParagraph}${projectHighlight}${certLine}
 
-I am excited about the opportunity to contribute to ${company}'s engineering team and would welcome the chance to discuss how my background can add value. I have attached my tailored resume for your review.
+  I would be grateful if you could consider my profile for this opening. I have attached my resume for your review, and I would welcome the chance to discuss how my background could support your team.
 
 Looking forward to hearing from you.
 
@@ -467,11 +469,11 @@ ${senderName}`;
 
     return `Hi,
 
-I noticed you work at ${company} and I wanted to reach out. I'm interested in the ${jobTitle} position and was wondering if you'd be willing to refer me.
+I noticed you work at ${company}, so I wanted to reach out regarding the open ${jobTitle} role. If you feel my background is a fit, would you be open to referring me for that job posting?
 
 ${experienceSnippet}
 
-I believe my background is a great match for this role. If you're open to it, I can share my resume and the job link for your convenience. A referral from you would mean a lot!
+I believe my background is a strong match for the opening. If you're open to it, I can share my resume and the job link right away to make the referral easier.
 
 Thank you for considering this — happy to chat if you'd like to know more.
 

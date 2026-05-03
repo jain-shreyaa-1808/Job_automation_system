@@ -665,7 +665,11 @@ describe("Salary Intelligence", () => {
     expect(res.status).toBe(200);
     expect(res.body.email).toContain("Frontend Engineer");
     expect(res.body.email).toContain("Mail Corp");
+    expect(res.body.email).toContain("attached my resume");
+    expect(res.body.email).toContain("consider my profile");
     expect(res.body.linkedinMessage).toContain("Priya");
+    expect(res.body.referralMessage).toContain("open Frontend Engineer role");
+    expect(res.body.referralMessage).toContain("would you be open to referring me");
   });
 
   it("POST /api/v1/hr/find-by-domain returns recruiter leads across matching jobs", async () => {
