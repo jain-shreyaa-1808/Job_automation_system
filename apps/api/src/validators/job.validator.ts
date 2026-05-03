@@ -13,9 +13,21 @@ export const hrFindSchema = z.object({
   jobId: z.string().min(1),
 });
 
+export const hrFindByDomainSchema = z.object({
+  domain: z.string().min(2),
+  limit: z.number().int().min(1).max(12).optional(),
+});
+
 export const outreachSchema = z.object({
   jobId: z.string().min(1),
   recruiterLeadId: z.string().optional(),
+});
+
+export const outreachFromDescriptionSchema = z.object({
+  roleDescription: z.string().min(20),
+  company: z.string().min(1).optional(),
+  jobTitle: z.string().min(1).optional(),
+  recruiterName: z.string().min(1).optional(),
 });
 
 export const salarySchema = z.object({
@@ -30,5 +42,12 @@ export const leadStateSchema = z.object({
 });
 
 export const updateJobStatusSchema = z.object({
-  status: z.enum(["new", "applied", "in-progress", "finished", "bookmarked"]),
+  status: z.enum([
+    "new",
+    "applied",
+    "in-progress",
+    "finished",
+    "bookmarked",
+    "closed",
+  ]),
 });

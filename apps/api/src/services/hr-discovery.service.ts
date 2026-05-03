@@ -456,6 +456,52 @@ export class HrDiscoveryService {
     return saved;
   }
 
+  async discoverByDomain(userId: string, domain: string, limit = 6) {
+    const normalizedDomain = domain.trim();
+    if (!normalizedDomain) {
+      return { jobsMatched: [], leads: [] };
+    }
+
+    const regex = new RegExp(
+      normalizedDomain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "i",
+    );
+    const jobsMatched = await JobModel.find({
+      sourceUserId: userId,
+      linkStatus: "valid",
+      isProfileFit: true,
+      $or: [
+        { title: regex },
+        { company: regex },
+        { description: regex },
+        { categoryTags: { $in: [regex] } },
+        { extractedSkills: { $in: [regex] } },
+        { platform: regex },
+      ],
+    })
+      .sort({ relevanceScore: -1, updatedAt: -1 })
+      .limit(limit);
+
+    if (jobsMatched.length === 0) {
+      return { jobsMatched: [], leads: [] };
+    }
+
+    const leadGroups = await Promise.all(
+      jobsMatched.map((job) => this.discover(userId, job._id.toString())),
+    );
+
+    const dedupedLeads = new Map<string, (typeof leadGroups)[number][number]>();
+    for (const lead of leadGroups.flat()) {
+      const key = `${lead.jobId.toString()}:${lead.name}`;
+      dedupedLeads.set(key, lead);
+    }
+
+    return {
+      jobsMatched,
+      leads: [...dedupedLeads.values()],
+    };
+  }
+
   async updateState(
     userId: string,
     leadId: string,

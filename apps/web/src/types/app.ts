@@ -16,7 +16,13 @@ export type Job = {
   applicantCount?: number;
   experienceMin?: number;
   experienceMax?: number;
-  status: "new" | "applied" | "in-progress" | "finished" | "bookmarked";
+  status:
+    | "new"
+    | "applied"
+    | "in-progress"
+    | "finished"
+    | "bookmarked"
+    | "closed";
   linkStatus?: "valid" | "invalid" | "unchecked";
 };
 
@@ -46,6 +52,7 @@ export type DashboardResponse = {
     inProgress: Job[];
     finished: Job[];
     bookmarked: Job[];
+    closed: Job[];
   };
   recruiterLeads: RecruiterLead[];
   resumeScore: number;

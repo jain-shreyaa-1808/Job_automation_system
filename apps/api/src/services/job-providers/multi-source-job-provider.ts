@@ -71,9 +71,14 @@ export class MultiSourceJobProvider implements JobProvider {
       .split(",")
       .map((source) => source.trim().toLowerCase())
       .filter(Boolean);
-    if (publicScrapeSources.length > 0) {
-      providers.push(new PublicHtmlJobProvider(publicScrapeSources));
-    }
+
+    providers.push(
+      new PublicHtmlJobProvider(
+        publicScrapeSources.length > 0
+          ? publicScrapeSources
+          : ["foundit", "hirist"],
+      ),
+    );
 
     return providers;
   }

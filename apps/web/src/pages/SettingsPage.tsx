@@ -6,6 +6,7 @@ import { api } from "../lib/api";
 
 export function SettingsPage() {
   const [form, setForm] = useState({
+    linkedinUrl: "",
     currentCtc: "",
     expectedCtc: "",
     preferredRoles: "",
@@ -19,6 +20,7 @@ export function SettingsPage() {
     api.get("/auth/me").then((res) => {
       const u = res.data.user;
       setForm({
+        linkedinUrl: u.linkedinUrl ?? "",
         currentCtc: u.currentCtc ? String(u.currentCtc) : "",
         expectedCtc: u.expectedCtc ? String(u.expectedCtc) : "",
         preferredRoles: (u.preferredRoles ?? []).join(", "),
@@ -42,6 +44,7 @@ export function SettingsPage() {
         onSubmit={(event) => {
           event.preventDefault();
           updateSettings.mutate({
+            linkedinUrl: form.linkedinUrl.trim(),
             currentCtc: form.currentCtc ? Number(form.currentCtc) : 0,
             expectedCtc: form.expectedCtc ? Number(form.expectedCtc) : 0,
             preferredRoles: form.preferredRoles
@@ -56,6 +59,38 @@ export function SettingsPage() {
           });
         }}
       >
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 md:col-span-2">
+          <h2 className="text-lg font-semibold text-ink">
+            LinkedIn Connection
+          </h2>
+          <p className="mt-2 text-sm text-ink/70">
+            Save your LinkedIn profile URL here so the platform can keep your
+            outreach identity on file. Direct syncing of first-degree recruiter
+            connections requires a LinkedIn-approved OAuth/API integration,
+            which is not available in this repo yet.
+          </p>
+        </div>
+        <label className="md:col-span-2">
+          <span className="mb-2 block text-sm font-semibold text-ink/70">
+            LinkedIn Profile URL
+          </span>
+          <input
+            className="input"
+            type="url"
+            placeholder="https://linkedin.com/in/yourprofile"
+            value={form.linkedinUrl}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                linkedinUrl: event.target.value,
+              }))
+            }
+          />
+          <span className="mt-1 block text-xs text-ink/40">
+            This stores your profile link. First-connection recruiter sync is
+            not yet automated here.
+          </span>
+        </label>
         <label>
           <span className="mb-2 block text-sm font-semibold text-ink/70">
             Current CTC

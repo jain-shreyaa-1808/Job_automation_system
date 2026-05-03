@@ -16,6 +16,7 @@ const filters = [
   "in-progress",
   "finished",
   "bookmarked",
+  "closed",
 ] as const;
 
 export function JobListingsPage() {

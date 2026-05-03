@@ -11,3 +11,13 @@ export const generateOutreach = asyncHandler(async (request, response) => {
   );
   response.json(result);
 });
+
+export const generateOutreachFromDescription = asyncHandler(
+  async (request, response) => {
+    const result = await outreachService.generateFromDescription(
+      request.user!.sub,
+      request.body,
+    );
+    response.json(result);
+  },
+);

@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 
 import { SectionHeader } from "../components/SectionHeader";
 import {
   useDashboardQuery,
   useFindHrLeads,
+  useFindHrLeadsByDomain,
   useGenerateOutreach,
+  useGenerateOutreachFromDescription,
   useJobsQuery,
   useUpdateHrLeadState,
 } from "../hooks/usePlatformData";
@@ -30,10 +33,17 @@ export function HROutreachPage() {
   const { data: jobs, isLoading } = useJobsQuery();
   const { data: dashboard } = useDashboardQuery();
   const findHrLeads = useFindHrLeads();
+  const findHrLeadsByDomain = useFindHrLeadsByDomain();
   const outreach = useGenerateOutreach();
+  const descriptionOutreach = useGenerateOutreachFromDescription();
   const updateLeadState = useUpdateHrLeadState();
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
+  const [domainSearch, setDomainSearch] = useState("");
+  const [roleDescription, setRoleDescription] = useState("");
+  const [manualJobTitle, setManualJobTitle] = useState("");
+  const [manualCompany, setManualCompany] = useState("");
+  const [manualRecruiterName, setManualRecruiterName] = useState("");
   const [jobId, setJobId] = useState<string>("");
   const [leadId, setLeadId] = useState<string>("");
   const [categoryFilter, setCategoryFilter] =
@@ -64,18 +74,103 @@ export function HROutreachPage() {
     );
   }, [jobs, search]);
 
+  const selectedJob = useMemo(() => {
+    if (!jobs || !jobId) return null;
+    return jobs.find((job) => job._id === jobId) ?? null;
+  }, [jobs, jobId]);
+
+  const bestSearchMatch = useMemo(() => {
+    if (!jobs || !search.trim()) return null;
+
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return (
+      jobs.find((job) => {
+        const title = job.title.toLowerCase();
+        const company = job.company.toLowerCase();
+        const combined = `${job.title} — ${job.company}`.toLowerCase();
+
+        return (
+          title === normalizedSearch ||
+          company === normalizedSearch ||
+          combined === normalizedSearch
+        );
+      }) ??
+      filtered[0] ??
+      null
+    );
+  }, [jobs, search, filtered]);
+
+  const actionJob = selectedJob ?? bestSearchMatch;
+
   const selectedJobLeads = useMemo(() => {
     if (!dashboard?.recruiterLeads || !jobId) return [];
     return dashboard.recruiterLeads.filter((lead) => lead.jobId === jobId);
   }, [dashboard?.recruiterLeads, jobId]);
 
-  const visibleLeads = useMemo(() => {
-    if (categoryFilter === "all") {
+  const normalizedDomainSearch = domainSearch.trim().toLowerCase();
+
+  const domainMatchedJobs = useMemo(() => {
+    if (!jobs || !normalizedDomainSearch) return [];
+
+    return jobs.filter((job) =>
+      [
+        job.title,
+        job.company,
+        job.description,
+        job.platform,
+        ...(job.categoryTags ?? []),
+        ...(job.extractedSkills ?? []),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedDomainSearch),
+    );
+  }, [jobs, normalizedDomainSearch]);
+
+  const domainMatchedJobIds = useMemo(
+    () => new Set(domainMatchedJobs.map((job) => job._id)),
+    [domainMatchedJobs],
+  );
+
+  const leadReviewPool = useMemo(() => {
+    if (!dashboard?.recruiterLeads) {
+      return [];
+    }
+
+    if (!normalizedDomainSearch) {
       return selectedJobLeads;
     }
 
-    return selectedJobLeads.filter((lead) => lead.category === categoryFilter);
-  }, [selectedJobLeads, categoryFilter]);
+    return dashboard.recruiterLeads.filter(
+      (lead) =>
+        domainMatchedJobIds.has(lead.jobId) ||
+        [
+          lead.name,
+          lead.title,
+          lead.company,
+          lead.searchQuery,
+          lead.hiringSignal,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedDomainSearch),
+    );
+  }, [
+    dashboard?.recruiterLeads,
+    normalizedDomainSearch,
+    domainMatchedJobIds,
+    selectedJobLeads,
+  ]);
+
+  const visibleLeads = useMemo(() => {
+    if (categoryFilter === "all") {
+      return leadReviewPool;
+    }
+
+    return leadReviewPool.filter((lead) => lead.category === categoryFilter);
+  }, [leadReviewPool, categoryFilter]);
 
   const outreachSummary = useMemo(() => {
     return visibleLeads.reduce(
@@ -98,6 +193,16 @@ export function HROutreachPage() {
     }
   }, [visibleLeads, leadId]);
 
+  useEffect(() => {
+    if (!bestSearchMatch) {
+      return;
+    }
+
+    if (jobId !== bestSearchMatch._id) {
+      setJobId(bestSearchMatch._id);
+    }
+  }, [bestSearchMatch, jobId]);
+
   function openAllLeadSearches() {
     visibleLeads.forEach((lead) => {
       const target = lead.searchUrl ?? lead.profileUrl;
@@ -107,6 +212,14 @@ export function HROutreachPage() {
     });
   }
 
+  function selectJob(job: { _id: string; title: string; company: string }) {
+    setJobId(job._id);
+    setSearch(`${job.title} — ${job.company}`);
+    setOpen(false);
+  }
+
+  const generatedOutreach = descriptionOutreach.data ?? outreach.data;
+
   return (
     <div>
       <SectionHeader
@@ -115,14 +228,134 @@ export function HROutreachPage() {
         description="Discover active HR and recruiter leads, keep a sent vs pending view, and generate a LinkedIn message you can send when a role fit appears."
       />
 
+      <div className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className="panel space-y-4">
+          <div>
+            <h2 className="text-xl">Search Recruiters By Job Domain</h2>
+            <p className="mt-1 text-sm text-ink/55">
+              Enter a job domain like frontend, devops, qa automation, or
+              backend to find recruiter leads across all matching jobs.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              className="input flex-1"
+              placeholder="e.g. frontend, backend, devops, qa automation"
+              value={domainSearch}
+              onChange={(event) => setDomainSearch(event.target.value)}
+            />
+            <button
+              type="button"
+              className="button-primary"
+              disabled={!domainSearch.trim() || findHrLeadsByDomain.isPending}
+              onClick={() =>
+                findHrLeadsByDomain.mutate({
+                  domain: domainSearch.trim(),
+                  limit: 8,
+                })
+              }
+            >
+              {findHrLeadsByDomain.isPending
+                ? "Finding recruiters…"
+                : "Find recruiters by domain"}
+            </button>
+          </div>
+          {normalizedDomainSearch ? (
+            <p className="text-sm text-ink/60">
+              {domainMatchedJobs.length} matching jobs found for this domain.
+            </p>
+          ) : null}
+          {findHrLeadsByDomain.data ? (
+            <p className="text-sm text-moss">
+              Found {findHrLeadsByDomain.data.leads.length} recruiter leads
+              across {findHrLeadsByDomain.data.jobsMatched.length} matching
+              jobs.
+            </p>
+          ) : null}
+        </section>
+
+        <section className="panel space-y-3">
+          <h2 className="text-xl">LinkedIn Connect</h2>
+          <p className="text-sm text-ink/60">
+            Save your LinkedIn profile in settings so the platform can
+            personalize outreach around your identity. Direct syncing of
+            first-degree recruiter connections still requires a
+            LinkedIn-approved OAuth/API integration, so this repo cannot
+            automatically import your connections yet.
+          </p>
+          <Link className="button-secondary w-full text-center" to="/settings">
+            Open LinkedIn Settings
+          </Link>
+          <p className="text-xs text-ink/45">
+            Current workaround: use the domain recruiter search here plus
+            LinkedIn people-search links generated for each lead.
+          </p>
+        </section>
+      </div>
+
+      <section className="panel mb-6 space-y-4">
+        <div>
+          <h2 className="text-xl">Generate Outreach From Role Description</h2>
+          <p className="mt-1 text-sm text-ink/55">
+            Paste a role description here and the platform will draft a recruiter outreach mail even if you have not saved the job yet.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <input
+            className="input"
+            placeholder="Job title, optional"
+            value={manualJobTitle}
+            onChange={(event) => setManualJobTitle(event.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="Company, optional"
+            value={manualCompany}
+            onChange={(event) => setManualCompany(event.target.value)}
+          />
+          <input
+            className="input"
+            placeholder="HR / recruiter name, optional"
+            value={manualRecruiterName}
+            onChange={(event) => setManualRecruiterName(event.target.value)}
+          />
+        </div>
+        <textarea
+          className="input min-h-[180px]"
+          placeholder="Paste the role description here..."
+          value={roleDescription}
+          onChange={(event) => setRoleDescription(event.target.value)}
+        />
+        <button
+          type="button"
+          className="button-primary"
+          disabled={!roleDescription.trim() || descriptionOutreach.isPending}
+          onClick={() =>
+            descriptionOutreach.mutate({
+              roleDescription: roleDescription.trim(),
+              ...(manualJobTitle.trim() ? { jobTitle: manualJobTitle.trim() } : {}),
+              ...(manualCompany.trim() ? { company: manualCompany.trim() } : {}),
+              ...(manualRecruiterName.trim()
+                ? { recruiterName: manualRecruiterName.trim() }
+                : {}),
+            })
+          }
+        >
+          {descriptionOutreach.isPending
+            ? "Generating mail…"
+            : "Generate HR outreach mail"}
+        </button>
+      </section>
+
       <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <section className="panel">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-2xl">Lead Review</h2>
               <p className="mt-1 text-sm text-ink/50">
-                Review active recruiter names and profile links, then mark each
-                one as message sent or yet to be sent.
+                {normalizedDomainSearch
+                  ? "Review recruiter leads across all jobs matching the selected domain, then mark each one as message sent or yet to be sent."
+                  : "Review active recruiter names and profile links, then mark each one as message sent or yet to be sent."}
               </p>
             </div>
             <button
@@ -290,8 +523,9 @@ export function HROutreachPage() {
             </div>
           ) : (
             <p className="mt-4 text-sm text-ink/50">
-              No LinkedIn hiring leads match this filter yet. Pick a role and
-              run discovery to generate recruiter and hiring-manager searches.
+              {normalizedDomainSearch
+                ? "No recruiter leads match this domain search yet. Try a broader role keyword or run domain discovery."
+                : "No LinkedIn hiring leads match this filter yet. Pick a role and run discovery to generate recruiter and hiring-manager searches."}
             </p>
           )}
         </section>
@@ -300,6 +534,26 @@ export function HROutreachPage() {
           <label className="block text-sm font-semibold text-ink/70">
             Choose job for outreach
           </label>
+
+          {jobs && jobs.length === 0 ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="font-semibold">
+                Outreach needs a matched job first.
+              </p>
+              <p className="mt-2">
+                Upload a resume so the platform can build your profile, then
+                refresh jobs before coming back here.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link className="button-secondary" to="/resume">
+                  Upload Resume
+                </Link>
+                <Link className="button-secondary" to="/">
+                  Go to Dashboard
+                </Link>
+              </div>
+            </div>
+          ) : null}
 
           <div className="relative" ref={wrapperRef}>
             <input
@@ -311,6 +565,12 @@ export function HROutreachPage() {
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && bestSearchMatch) {
+                  e.preventDefault();
+                  selectJob(bestSearchMatch);
+                }
+              }}
             />
             {open && filtered.length > 0 && (
               <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-2xl border border-ink/10 bg-white shadow-panel">
@@ -321,11 +581,7 @@ export function HROutreachPage() {
                       className={`w-full px-4 py-3 text-left text-sm transition hover:bg-skywash ${
                         job._id === jobId ? "bg-skywash font-semibold" : ""
                       }`}
-                      onClick={() => {
-                        setJobId(job._id);
-                        setSearch(`${job.title} — ${job.company}`);
-                        setOpen(false);
-                      }}
+                      onClick={() => selectJob(job)}
                     >
                       <span className="font-medium">{job.title}</span>
                       <span className="ml-2 text-ink/50">@ {job.company}</span>
@@ -336,11 +592,27 @@ export function HROutreachPage() {
             )}
           </div>
 
+          {actionJob ? (
+            <p className="text-sm text-ink/55">
+              Selected job:{" "}
+              <span className="font-semibold text-ink">{actionJob.title}</span>
+              <span className="text-ink/40"> @ {actionJob.company}</span>
+            </p>
+          ) : (
+            <p className="text-sm text-ink/45">
+              Start typing a role name and press Enter to select the best match.
+            </p>
+          )}
+
           <button
             type="button"
             className="button-secondary w-full"
-            disabled={!jobId || findHrLeads.isPending}
-            onClick={() => findHrLeads.mutate(jobId)}
+            disabled={!actionJob || findHrLeads.isPending}
+            onClick={() => {
+              if (actionJob) {
+                findHrLeads.mutate(actionJob._id);
+              }
+            }}
           >
             {findHrLeads.isPending
               ? "Finding LinkedIn leads…"
@@ -367,10 +639,11 @@ export function HROutreachPage() {
           <button
             type="button"
             className="button-primary w-full"
-            disabled={!jobId || outreach.isPending}
+            disabled={!actionJob || outreach.isPending}
             onClick={() =>
+              actionJob &&
               outreach.mutate({
-                jobId,
+                jobId: actionJob._id,
                 ...(leadId ? { recruiterLeadId: leadId } : {}),
               })
             }
@@ -387,13 +660,13 @@ export function HROutreachPage() {
             </p>
           ) : null}
 
-          {(outreach.data?.email || outreach.data?.linkedinMessage) && (
+          {(generatedOutreach?.email || generatedOutreach?.linkedinMessage) && (
             <div className="space-y-4 pt-2">
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-3xl bg-skywash p-5">
                   <h3 className="text-lg font-semibold">Cold Email</h3>
                   <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
-                    {outreach.data.email}
+                    {generatedOutreach?.email}
                   </pre>
                 </div>
                 <div className="rounded-3xl bg-white p-5 ring-1 ring-ink/10">
@@ -405,24 +678,24 @@ export function HROutreachPage() {
                     and invite them to reach out if your profile matches.
                   </p>
                   <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
-                    {outreach.data.linkedinMessage}
+                    {generatedOutreach?.linkedinMessage}
                   </pre>
                 </div>
               </div>
-              {outreach.data.referralMessage && (
+              {generatedOutreach?.referralMessage && (
                 <div className="rounded-3xl bg-moss/5 p-5 ring-1 ring-moss/20">
                   <h3 className="text-lg font-semibold text-moss">
                     Referral Request Message
                   </h3>
                   <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink/80">
-                    {outreach.data.referralMessage}
+                    {generatedOutreach?.referralMessage}
                   </pre>
                 </div>
               )}
             </div>
           )}
 
-          {!outreach.data && !outreach.isPending && (
+          {!generatedOutreach && !outreach.isPending && !descriptionOutreach.isPending && (
             <div className="grid gap-4 pt-2 lg:grid-cols-2">
               <div className="rounded-3xl border border-dashed border-ink/10 p-5 text-center text-sm text-ink/40">
                 Cold email will appear here

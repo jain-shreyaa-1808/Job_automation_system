@@ -10,6 +10,7 @@ const jobStatuses = [
   "applied",
   "finished",
   "bookmarked",
+  "closed",
 ] as const;
 
 type JobCardProps = {

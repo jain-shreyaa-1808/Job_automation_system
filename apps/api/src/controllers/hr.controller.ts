@@ -8,6 +8,15 @@ export const findHr = asyncHandler(async (request, response) => {
   response.json({ leads });
 });
 
+export const findHrByDomain = asyncHandler(async (request, response) => {
+  const result = await hrService.discoverByDomain(
+    request.user!.sub,
+    request.body.domain,
+    request.body.limit,
+  );
+  response.json(result);
+});
+
 export const updateLeadState = asyncHandler(async (request, response) => {
   const lead = await hrService.updateState(
     request.user!.sub,

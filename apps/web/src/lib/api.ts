@@ -115,8 +115,30 @@ export async function generateOutreachForLead(
   return res.data;
 }
 
+export async function generateOutreachFromDescription(input: {
+  roleDescription: string;
+  company?: string;
+  jobTitle?: string;
+  recruiterName?: string;
+}) {
+  const res = await api.post<{
+    email: string;
+    linkedinMessage: string;
+    referralMessage: string;
+  }>("/outreach/generate-from-description", input);
+  return res.data;
+}
+
 export async function findHrLeads(jobId: string) {
   const res = await api.post<{ leads: RecruiterLead[] }>("/hr/find", { jobId });
+  return res.data;
+}
+
+export async function findHrLeadsByDomain(domain: string, limit = 6) {
+  const res = await api.post<{
+    jobsMatched: Job[];
+    leads: RecruiterLead[];
+  }>("/hr/find-by-domain", { domain, limit });
   return res.data;
 }
 

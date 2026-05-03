@@ -59,7 +59,8 @@ export class JobAggregationService {
     const userExperienceYears = this.calculateExperienceYears(
       profile?.experience ?? [],
     );
-    const maxAllowedExperienceMin = Math.max(2, userExperienceYears + 1);
+    const maxAllowedExperienceMin =
+      userExperienceYears <= 2 ? 2 : Math.max(2, userExperienceYears + 1);
     const jobs = await this.provider.fetchJobs({
       preferredRoles: [...preferredRoles],
       profileSkills,
@@ -291,11 +292,37 @@ export class JobAggregationService {
     }
 
     if (
-      /entry[ -]?level|junior|graduate|new grad|0 ?- ?2 years|0 to 2 years/i.test(
+      /entry[ -]?level|junior|graduate|new grad|fresher|intern(?:ship)?|0 ?- ?2 years|0 to 2 years/i.test(
         normalizedDescription,
       )
     ) {
       return { range: { min: 0, max: 2 }, confident: true };
+    }
+
+    const monthMatch = normalizedDescription.match(
+      /(\d{1,2})\s*(?:-|to)\s*(\d{1,2})\s*(?:months|mos)/i,
+    );
+    if (monthMatch) {
+      return { range: { min: 0, max: 1 }, confident: true };
+    }
+
+    const singleMonthMatch = normalizedDescription.match(
+      /(\d{1,2})\+?\s*(?:months|mos)/i,
+    );
+    if (singleMonthMatch) {
+      const months = Number.parseInt(singleMonthMatch[1], 10);
+      return {
+        range: { min: 0, max: months >= 24 ? 2 : 1 },
+        confident: true,
+      };
+    }
+
+    const singleYearMatch = normalizedDescription.match(
+      /(?:minimum|required|at least)?\s*(\d+)\s*(?:year|years|yrs)\b/i,
+    );
+    if (singleYearMatch) {
+      const min = Number.parseInt(singleYearMatch[1], 10);
+      return { range: { min, max: min + 1 }, confident: true };
     }
 
     if (
@@ -400,7 +427,7 @@ export class JobAggregationService {
       );
     const experienceBlocked =
       input.experienceRange.min > input.maxAllowedExperienceMin ||
-      (input.userExperienceYears <= 2 && input.experienceRange.max > 3);
+      (input.userExperienceYears <= 2 && input.experienceRange.min > 2);
 
     return (
       (hasRoleMatch || hasSkillMatch) && !seniorityBlocked && !experienceBlocked

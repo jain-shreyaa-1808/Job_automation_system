@@ -16,6 +16,7 @@ const filters = [
   "in-progress",
   "finished",
   "bookmarked",
+  "closed",
 ] as const;
 
 export function DashboardPage() {
@@ -33,6 +34,7 @@ export function DashboardPage() {
             ...data.tabs.inProgress,
             ...data.tabs.finished,
             ...data.tabs.bookmarked,
+            ...data.tabs.closed,
           ]
         : [],
     [data],
@@ -44,6 +46,7 @@ export function DashboardPage() {
       | "in-progress"
       | "finished"
       | "bookmarked"
+      | "closed"
       | undefined,
     platform,
     search,

@@ -8,6 +8,7 @@ type PortalCredentialInput = {
 };
 
 type SettingsInput = {
+  linkedinUrl?: string;
   currentCtc?: number;
   expectedCtc?: number;
   preferredRoles?: string[];
@@ -33,6 +34,9 @@ export class UserSettingsService {
     const user = await UserModel.findByIdAndUpdate(
       userId,
       {
+        ...(input.linkedinUrl !== undefined
+          ? { linkedinUrl: input.linkedinUrl }
+          : {}),
         ...(input.currentCtc !== undefined
           ? { currentCtc: input.currentCtc }
           : {}),

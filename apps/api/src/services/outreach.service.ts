@@ -41,79 +41,14 @@ export class OutreachService {
       throw AppError.notFound("Profile or job not found");
     }
 
-    const hrName = lead?.name ?? "Hiring Manager";
-    const hrTitle = lead?.title ?? "";
-
-    // Extract the most relevant skills for this specific JD
-    const jdKeywords = this.extractJDKeywords(job.description);
-    const relevantSkills = profile.skills.filter((s) =>
-      jdKeywords.some(
-        (k) => s.toLowerCase().includes(k) || k.includes(s.toLowerCase()),
-      ),
-    );
-    const topSkills =
-      relevantSkills.length >= 3
-        ? relevantSkills.slice(0, 5)
-        : profile.skills.slice(0, 5);
-
-    // Find the most relevant project for this JD
-    const bestProject = this.findBestProject(profile.projects, jdKeywords);
-
-    // Find the most relevant experience for this JD
-    const bestExperience = this.findBestExperience(
-      profile.experience,
-      jdKeywords,
-    );
-
-    const aiDrafts = await this.generateWithModel({
-      recipientName: hrName,
-      recipientTitle: hrTitle,
-      senderName: profile.name,
-      company: job.company,
-      jobTitle: job.title,
-      description: job.description,
-      topSkills,
-      bestProject,
-      bestExperience,
-      matchedSkills: job.matchedSkills ?? [],
-      certifications: profile.certifications,
-    });
-
-    const email =
-      aiDrafts?.email ??
-      this.buildColdEmail({
-        recipientName: hrName,
-        recipientTitle: hrTitle,
-        senderName: profile.name,
+    const { email, linkedinMessage, referralMessage } =
+      await this.generateDraftsFromContext(profile, {
+        recipientName: lead?.name ?? "Hiring Manager",
+        recipientTitle: lead?.title ?? "",
         company: job.company,
         jobTitle: job.title,
-        topSkills,
-        bestProject,
-        bestExperience,
+        description: job.description,
         matchedSkills: job.matchedSkills ?? [],
-        certifications: profile.certifications,
-      });
-
-    const linkedinMessage =
-      aiDrafts?.linkedinMessage ??
-      this.buildLinkedInMessage({
-        recipientName: hrName,
-        senderName: profile.name,
-        company: job.company,
-        jobTitle: job.title,
-        topSkills,
-        bestProject,
-        bestExperience,
-      });
-
-    const referralMessage =
-      aiDrafts?.referralMessage ??
-      this.buildReferralMessage({
-        senderName: profile.name,
-        company: job.company,
-        jobTitle: job.title,
-        topSkills,
-        bestExperience,
       });
 
     await GeneratedDocumentModel.insertMany([
@@ -139,6 +74,121 @@ export class OutreachService {
         content: referralMessage,
       },
     ]);
+
+    return {
+      email,
+      linkedinMessage,
+      referralMessage,
+    };
+  }
+
+  async generateFromDescription(
+    userId: string,
+    input: {
+      roleDescription: string;
+      company?: string;
+      jobTitle?: string;
+      recruiterName?: string;
+    },
+  ) {
+    const profile = await UserProfileModel.findOne({ userId }).lean<OutreachProfile | null>();
+
+    if (!profile) {
+      throw AppError.notFound("Profile not found");
+    }
+
+    const company = input.company?.trim() || "the company";
+    const jobTitle = input.jobTitle?.trim() || "this role";
+    const recruiterName = input.recruiterName?.trim() || "Hiring Manager";
+
+    return this.generateDraftsFromContext(profile, {
+      recipientName: recruiterName,
+      recipientTitle: "",
+      company,
+      jobTitle,
+      description: input.roleDescription,
+      matchedSkills: [],
+    });
+  }
+
+  private async generateDraftsFromContext(
+    profile: OutreachProfile,
+    input: {
+      recipientName: string;
+      recipientTitle: string;
+      company: string;
+      jobTitle: string;
+      description: string;
+      matchedSkills: string[];
+    },
+  ) {
+    const jdKeywords = this.extractJDKeywords(input.description);
+    const relevantSkills = profile.skills.filter((s) =>
+      jdKeywords.some(
+        (k) => s.toLowerCase().includes(k) || k.includes(s.toLowerCase()),
+      ),
+    );
+    const topSkills =
+      relevantSkills.length >= 3
+        ? relevantSkills.slice(0, 5)
+        : profile.skills.slice(0, 5);
+
+    const bestProject = this.findBestProject(profile.projects, jdKeywords);
+    const bestExperience = this.findBestExperience(
+      profile.experience,
+      jdKeywords,
+    );
+
+    const aiDrafts = await this.generateWithModel({
+      recipientName: input.recipientName,
+      recipientTitle: input.recipientTitle,
+      senderName: profile.name,
+      company: input.company,
+      jobTitle: input.jobTitle,
+      description: input.description,
+      topSkills,
+      bestProject,
+      bestExperience,
+      matchedSkills: input.matchedSkills,
+      certifications: profile.certifications,
+    });
+
+    const email =
+      aiDrafts?.email ??
+      this.buildColdEmail({
+        recipientName: input.recipientName,
+        recipientTitle: input.recipientTitle,
+        senderName: profile.name,
+        company: input.company,
+        jobTitle: input.jobTitle,
+        topSkills,
+        bestProject,
+        bestExperience,
+        matchedSkills: input.matchedSkills,
+        certifications: profile.certifications,
+      });
+
+    const linkedinMessage =
+      aiDrafts?.linkedinMessage ??
+      this.buildLinkedInMessage({
+        recipientName: input.recipientName,
+        senderName: profile.name,
+        company: input.company,
+        jobTitle: input.jobTitle,
+        topSkills,
+        bestProject,
+        bestExperience,
+      });
+
+    const referralMessage =
+      aiDrafts?.referralMessage ??
+      this.buildReferralMessage({
+        senderName: profile.name,
+        company: input.company,
+        jobTitle: input.jobTitle,
+        topSkills,
+        bestExperience,
+      });
 
     return {
       email,

@@ -26,6 +26,7 @@ export class DashboardService {
         inProgress: sortedJobs.filter((job) => job.status === "in-progress"),
         finished: sortedJobs.filter((job) => job.status === "finished"),
         bookmarked: sortedJobs.filter((job) => job.status === "bookmarked"),
+        closed: sortedJobs.filter((job) => job.status === "closed"),
       },
       applications,
       recruiterLeads: leads,

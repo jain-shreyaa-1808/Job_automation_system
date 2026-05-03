@@ -24,7 +24,14 @@ const jobSchema = new Schema(
     applicantCount: { type: Number, default: 0 },
     status: {
       type: String,
-      enum: ["new", "applied", "in-progress", "finished", "bookmarked"],
+      enum: [
+        "new",
+        "applied",
+        "in-progress",
+        "finished",
+        "bookmarked",
+        "closed",
+      ],
       default: "new",
     },
     jobSource: {

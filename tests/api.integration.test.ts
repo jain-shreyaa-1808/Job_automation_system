@@ -344,6 +344,37 @@ describe("Jobs", () => {
     expect(res.status).toBe(200);
     expect(res.body.job.status).toBe("finished");
   });
+
+  it("PATCH /api/v1/jobs/:jobId/status accepts closed status", async () => {
+    const db = mongoose.connection.db!;
+    const insertResult = await db.collection("jobs").insertOne({
+      sourceUserId: new mongoose.Types.ObjectId(userId),
+      title: "Closed Target Role",
+      normalizedTitle: "closed target role",
+      company: "Closed Corp",
+      description: "Closed status fixture",
+      link: `https://example.com/closed-role-${Date.now()}`,
+      platform: "Foundit",
+      location: "Remote",
+      extractedSkills: ["typescript"],
+      categoryTags: ["Backend"],
+      relevanceScore: 80,
+      matchedSkills: ["typescript"],
+      missingSkills: [],
+      status: "new",
+      jobSource: "remote",
+      isProfileFit: true,
+      linkStatus: "valid",
+    });
+
+    const res = await request(app)
+      .patch(`/api/v1/jobs/${insertResult.insertedId.toString()}/status`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ status: "closed" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.job.status).toBe("closed");
+  });
 });
 
 describe("Dashboard", () => {
@@ -356,6 +387,7 @@ describe("Dashboard", () => {
     expect(res.body.tabs).toBeDefined();
     expect(res.body.tabs.newJobs).toBeInstanceOf(Array);
     expect(res.body.tabs.applied).toBeInstanceOf(Array);
+    expect(res.body.tabs.closed).toBeInstanceOf(Array);
     expect(res.body.applications).toBeInstanceOf(Array);
     expect(res.body.recruiterLeads).toBeInstanceOf(Array);
     expect(res.body.resumeScore).toBeDefined();
@@ -587,5 +619,96 @@ describe("Salary Intelligence", () => {
       .send({ currentCtc: -1 });
 
     expect(res.status).toBe(400);
+  });
+
+  it("POST /api/v1/outreach/generate-from-description builds recruiter drafts from pasted role text", async () => {
+    const db = mongoose.connection.db!;
+    const profileUserId = new mongoose.Types.ObjectId(userId);
+    await db.collection("userprofiles").updateOne(
+      { userId: profileUserId },
+      {
+        $set: {
+          userId: profileUserId,
+          name: "Outreach Test User",
+          skills: ["javascript", "typescript", "react", "node.js"],
+          projects: [
+            {
+              name: "Hiring Dashboard",
+              summary: "Built a recruiter-facing workflow dashboard.",
+              technologies: ["react", "node.js"],
+            },
+          ],
+          experience: [
+            {
+              company: "Launch Labs",
+              title: "Software Engineer",
+              summary: "Built internal tools and recruiter workflow features.",
+            },
+          ],
+          certifications: ["AWS Cloud Practitioner"],
+        },
+      },
+      { upsert: true },
+    );
+
+    const res = await request(app)
+      .post("/api/v1/outreach/generate-from-description")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({
+        jobTitle: "Frontend Engineer",
+        company: "Mail Corp",
+        recruiterName: "Priya",
+        roleDescription:
+          "We are hiring a frontend engineer with React, TypeScript, and Node.js experience to build customer-facing workflows.",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.email).toContain("Frontend Engineer");
+    expect(res.body.email).toContain("Mail Corp");
+    expect(res.body.linkedinMessage).toContain("Priya");
+  });
+
+  it("POST /api/v1/hr/find-by-domain returns recruiter leads across matching jobs", async () => {
+    const db = mongoose.connection.db!;
+    const jobId = new mongoose.Types.ObjectId();
+
+    await db.collection("jobs").insertOne({
+      _id: jobId,
+      sourceUserId: new mongoose.Types.ObjectId(userId),
+      title: "Frontend Developer",
+      normalizedTitle: "frontend developer",
+      company: "Domain Corp",
+      description:
+        "Hiring frontend engineers with React and TypeScript experience",
+      link: "https://example.com/frontend-domain-role",
+      platform: "LinkedIn",
+      location: "Remote",
+      extractedSkills: ["react", "typescript"],
+      categoryTags: ["frontend"],
+      relevanceScore: 92,
+      matchedSkills: ["react", "typescript"],
+      missingSkills: [],
+      status: "new",
+      linkStatus: "valid",
+      isProfileFit: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await request(app)
+      .post("/api/v1/hr/find-by-domain")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ domain: "frontend" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.jobsMatched.length).toBeGreaterThanOrEqual(1);
+    expect(
+      res.body.jobsMatched.some(
+        (job: { title: string; company: string }) =>
+          job.title === "Frontend Developer" && job.company === "Domain Corp",
+      ),
+    ).toBe(true);
+    expect(res.body.leads.length).toBeGreaterThan(0);
+    expect(res.body.leads[0].company).toBe("Domain Corp");
   });
 });

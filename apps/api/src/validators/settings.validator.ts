@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const settingsSchema = z.object({
+  linkedinUrl: z.string().url().or(z.literal("")).optional(),
   currentCtc: z.number().nonnegative().optional(),
   expectedCtc: z.number().nonnegative().optional(),
   preferredRoles: z.array(z.string()).optional(),

@@ -1,14 +1,24 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 
 import { SectionHeader } from "../components/SectionHeader";
-import { useJobsQuery } from "../hooks/usePlatformData";
+import { useJobsQuery, useUpdateJobStatus } from "../hooks/usePlatformData";
 import type { Job } from "../types/app";
+
+const jobStatuses: Job["status"][] = [
+  "new",
+  "in-progress",
+  "applied",
+  "finished",
+  "bookmarked",
+  "closed",
+];
 
 export function JobDetailsPage() {
   const { jobId } = useParams();
   const location = useLocation();
   const routeJob = (location.state as { job?: Job } | null)?.job;
   const { data, isLoading, isError, error } = useJobsQuery();
+  const updateStatus = useUpdateJobStatus();
   const job =
     (jobId ? data?.find((item) => item._id === jobId) : undefined) ?? routeJob;
 
@@ -43,6 +53,9 @@ export function JobDetailsPage() {
         ),
       )
     : null;
+
+  const isUpdatingCurrentJob =
+    updateStatus.isPending && updateStatus.variables?.jobId === job._id;
 
   return (
     <div>
@@ -122,6 +135,26 @@ export function JobDetailsPage() {
 
         <section className="panel space-y-4">
           <h2 className="text-2xl">Actions</h2>
+          <label className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white/70 px-4 py-3 text-sm font-semibold text-ink/70">
+            <span>Move to section</span>
+            <select
+              className="bg-transparent text-sm font-semibold outline-none"
+              value={job.status}
+              disabled={isUpdatingCurrentJob}
+              onChange={(event) =>
+                updateStatus.mutate({
+                  jobId: job._id,
+                  status: event.target.value as Job["status"],
+                })
+              }
+            >
+              {jobStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
           <Link
             to={`/optimizer?jobId=${job._id}`}
             className="button-primary w-full"
@@ -137,11 +170,24 @@ export function JobDetailsPage() {
           <Link
             to={`/auto-apply?jobId=${job._id}`}
             className={`button-secondary w-full text-center ${
-              job.status === "applied" ? "pointer-events-none opacity-50" : ""
+              job.status === "applied" || job.status === "closed"
+                ? "pointer-events-none opacity-50"
+                : ""
             }`}
           >
-            {job.status === "applied" ? "Already Applied" : "Queue Auto Apply"}
+            {job.status === "applied"
+              ? "Already Applied"
+              : job.status === "closed"
+                ? "Closed Job"
+                : "Queue Auto Apply"}
           </Link>
+          {updateStatus.isError && isUpdatingCurrentJob && (
+            <p className="text-sm text-red-700">
+              {updateStatus.error instanceof Error
+                ? updateStatus.error.message
+                : "Unable to update the job state right now."}
+            </p>
+          )}
         </section>
       </div>
     </div>

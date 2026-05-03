@@ -5,7 +5,11 @@ import {
   confirmApplication,
 } from "../controllers/apply.controller.js";
 import { login, me, signup } from "../controllers/auth.controller.js";
-import { findHr, updateLeadState } from "../controllers/hr.controller.js";
+import {
+  findHr,
+  findHrByDomain,
+  updateLeadState,
+} from "../controllers/hr.controller.js";
 import { refreshAllJobs } from "../controllers/internal.controller.js";
 import {
   dashboard,
@@ -15,7 +19,10 @@ import {
   updateJobStatus,
   validateLinks,
 } from "../controllers/jobs.controller.js";
-import { generateOutreach } from "../controllers/outreach.controller.js";
+import {
+  generateOutreach,
+  generateOutreachFromDescription,
+} from "../controllers/outreach.controller.js";
 import {
   generateResume,
   getResumeProfile,
@@ -34,7 +41,9 @@ import { loginSchema, signupSchema } from "../validators/auth.validator.js";
 import {
   applyJobSchema,
   hrFindSchema,
+  hrFindByDomainSchema,
   leadStateSchema,
+  outreachFromDescriptionSchema,
   outreachSchema,
   resumeGenerateSchema,
   salarySchema,
@@ -75,11 +84,21 @@ apiRouter.get("/resume/download/:id", downloadResumePdf);
 apiRouter.post("/apply/job", validateBody(applyJobSchema), applyJob);
 apiRouter.post("/apply/confirm", confirmApplication);
 apiRouter.post("/hr/find", validateBody(hrFindSchema), findHr);
+apiRouter.post(
+  "/hr/find-by-domain",
+  validateBody(hrFindByDomainSchema),
+  findHrByDomain,
+);
 apiRouter.patch("/hr/state", validateBody(leadStateSchema), updateLeadState);
 apiRouter.post(
   "/outreach/generate",
   validateBody(outreachSchema),
   generateOutreach,
+);
+apiRouter.post(
+  "/outreach/generate-from-description",
+  validateBody(outreachFromDescriptionSchema),
+  generateOutreachFromDescription,
 );
 apiRouter.post(
   "/salary/intelligence",
