@@ -163,6 +163,10 @@ describe("End-to-End: Complete User Journey", () => {
     expect(res.body.leads.length).toBeGreaterThan(0);
     expect(res.body.leads[0].company).toBe("TestCorp");
     expect(res.body.leads[0].name).toContain("Recruiting Team");
+    expect(res.body.leads[0].searchUrl).toContain(
+      "linkedin.com/search/results/people",
+    );
+    expect(res.body.leads[0].hiringSignal).toContain("hiring");
   });
 
   it("Step 7: User generates outreach messages", async () => {

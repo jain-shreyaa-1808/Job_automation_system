@@ -418,6 +418,48 @@ describe("Dashboard", () => {
 });
 
 describe("HR Discovery", () => {
+  it("POST /api/v1/hr/find returns LinkedIn hiring lead metadata", async () => {
+    const db = mongoose.connection.db!;
+    const insertedJob = await db.collection("jobs").insertOne({
+      sourceUserId: new mongoose.Types.ObjectId(userId),
+      title: "Software Engineer",
+      normalizedTitle: "software engineer",
+      company: "TestCorp",
+      description: "Build backend systems with TypeScript and Node.js",
+      link: "https://example.com/software-engineer",
+      platform: "LinkedIn",
+      location: "Bangalore, India",
+      extractedSkills: ["typescript", "node.js"],
+      categoryTags: ["backend"],
+      relevanceScore: 88,
+      matchedSkills: ["typescript"],
+      missingSkills: ["system design"],
+      status: "new",
+      linkStatus: "valid",
+      isProfileFit: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await request(app)
+      .post("/api/v1/hr/find")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ jobId: insertedJob.insertedId.toString() });
+
+    expect(res.status).toBe(200);
+    expect(res.body.leads).toBeInstanceOf(Array);
+    expect(res.body.leads.length).toBeGreaterThan(0);
+    expect(res.body.leads[0].company).toBe("TestCorp");
+    expect(res.body.leads[0].profileUrl).toContain(
+      "linkedin.com/search/results/people",
+    );
+    expect(res.body.leads[0].searchUrl).toContain(
+      "linkedin.com/search/results/people",
+    );
+    expect(res.body.leads[0].searchQuery).toContain("TestCorp");
+    expect(res.body.leads[0].hiringSignal).toContain("hiring");
+  });
+
   it("POST /api/v1/hr/find returns 404 for non-existent job", async () => {
     const res = await request(app)
       .post("/api/v1/hr/find")
@@ -435,6 +477,63 @@ describe("HR Discovery", () => {
       .send({});
 
     expect(res.status).toBe(400);
+  });
+
+  it("PATCH /api/v1/hr/state updates recruiter lead state", async () => {
+    const db = mongoose.connection.db!;
+    const jobId = new mongoose.Types.ObjectId();
+    const leadId = new mongoose.Types.ObjectId();
+
+    await db.collection("jobs").insertOne({
+      _id: jobId,
+      sourceUserId: new mongoose.Types.ObjectId(userId),
+      title: "Software Engineer",
+      normalizedTitle: "software engineer",
+      company: "Stateful Corp",
+      description: "Hiring for backend development",
+      link: "https://example.com/stateful-role",
+      platform: "LinkedIn",
+      location: "Remote",
+      extractedSkills: ["typescript"],
+      categoryTags: ["backend"],
+      relevanceScore: 90,
+      matchedSkills: ["typescript"],
+      missingSkills: [],
+      status: "new",
+      linkStatus: "valid",
+      isProfileFit: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await db.collection("recruiterleads").insertOne({
+      _id: leadId,
+      userId: new mongoose.Types.ObjectId(userId),
+      jobId,
+      name: "Test Recruiter",
+      title: "Technical Recruiter",
+      category: "talent-acquisition",
+      company: "Stateful Corp",
+      profileUrl:
+        "https://www.linkedin.com/search/results/people/?keywords=test",
+      searchUrl:
+        "https://www.linkedin.com/search/results/people/?keywords=stateful",
+      searchQuery: "Stateful Corp technical recruiter hiring software engineer",
+      hiringSignal: "Likely active hiring owner for software engineer roles.",
+      recentPosts: ["We're hiring engineers now"],
+      state: "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const res = await request(app)
+      .patch("/api/v1/hr/state")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ leadId: leadId.toString(), state: "action-taken" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.lead.state).toBe("action-taken");
+    expect(res.body.lead.name).toBe("Test Recruiter");
   });
 });
 

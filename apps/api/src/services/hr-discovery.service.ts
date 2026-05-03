@@ -8,6 +8,13 @@ type ContactTemplate = {
   category: "hr" | "talent-acquisition" | "hiring-manager" | "referral";
 };
 
+type LeadSeed = ContactTemplate & {
+  searchQuery: string;
+  searchUrl: string;
+  hiringSignal: string;
+  recentPosts: string[];
+};
+
 // Realistic contact role templates per company
 const COMPANY_CONTACTS: Record<string, ContactTemplate[]> = {
   "Amazon India": [
@@ -298,6 +305,75 @@ function generateLinkedInSearchUrl(name: string, company: string): string {
   return `https://www.linkedin.com/search/results/people/?keywords=${query}`;
 }
 
+function generateLinkedInHiringSearchUrl(query: string): string {
+  return `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(query)}`;
+}
+
+function getSearchKeywords(
+  contact: ContactTemplate,
+  company: string,
+  jobTitle: string,
+  location: string,
+) {
+  const normalizedTitle = jobTitle.replace(/\s+/g, " ").trim();
+  const locationHint = location.split(/[,-]/)[0]?.trim() || location;
+
+  switch (contact.category) {
+    case "talent-acquisition":
+      return `${company} technical recruiter hiring ${normalizedTitle} ${locationHint}`;
+    case "hiring-manager":
+      return `${company} engineering manager hiring ${normalizedTitle} ${locationHint}`;
+    case "hr":
+      return `${company} HR business partner hiring engineering ${locationHint}`;
+    case "referral":
+      return `${company} senior engineer referral ${normalizedTitle} ${locationHint}`;
+  }
+}
+
+function getHiringSignal(
+  contact: ContactTemplate,
+  jobTitle: string,
+  company: string,
+) {
+  switch (contact.category) {
+    case "talent-acquisition":
+      return `Likely active hiring owner for ${jobTitle} roles at ${company}.`;
+    case "hiring-manager":
+      return `Likely team owner or decision-maker connected to ${jobTitle} hiring.`;
+    case "hr":
+      return `Likely HR partner supporting current engineering hiring at ${company}.`;
+    case "referral":
+      return `Potential internal referrer close to the team hiring for this role.`;
+  }
+}
+
+function buildLeadSeeds(
+  contacts: ContactTemplate[],
+  job: { title: string; company: string; location: string },
+): LeadSeed[] {
+  return contacts.map((contact) => {
+    const searchQuery = getSearchKeywords(
+      contact,
+      job.company,
+      job.title,
+      job.location,
+    );
+
+    return {
+      ...contact,
+      searchQuery,
+      searchUrl: generateLinkedInHiringSearchUrl(searchQuery),
+      hiringSignal: getHiringSignal(contact, job.title, job.company),
+      recentPosts: generateRecentPosts(
+        contact,
+        job.title,
+        job.company,
+        job.location,
+      ),
+    };
+  });
+}
+
 function generateRecentPosts(
   contact: ContactTemplate,
   jobTitle: string,
@@ -343,20 +419,24 @@ export class HrDiscoveryService {
     }
 
     const companyContacts = COMPANY_CONTACTS[job.company] ?? DEFAULT_CONTACTS;
+    const leadSeeds = buildLeadSeeds(companyContacts, {
+      title: job.title,
+      company: job.company,
+      location: job.location,
+    });
 
-    const leads = companyContacts.map((contact) => ({
+    const leads = leadSeeds.map((contact) => ({
       userId,
       jobId,
       name: contact.nameTemplate,
       title: `${contact.title} (${contact.category.replace("-", " ")})`,
+      category: contact.category,
       company: job.company,
       profileUrl: generateLinkedInSearchUrl(contact.nameTemplate, job.company),
-      recentPosts: generateRecentPosts(
-        contact,
-        job.title,
-        job.company,
-        job.location,
-      ),
+      searchUrl: contact.searchUrl,
+      searchQuery: contact.searchQuery,
+      hiringSignal: contact.hiringSignal,
+      recentPosts: contact.recentPosts,
     }));
 
     const saved = await Promise.all(

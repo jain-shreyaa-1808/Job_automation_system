@@ -5,15 +5,18 @@ import {
   confirmApplication,
   fetchDashboard,
   fetchJobs,
+  findHrLeads,
   generateOutreach,
+  generateOutreachForLead,
   generateResume,
   parseResume,
   triggerJobFetch,
+  updateHrLeadState,
   updateJobStatus,
   updateSettings,
   validateJobLinks,
 } from "../lib/api";
-import type { JobStatus } from "../types/app";
+import type { JobStatus, RecruiterLeadState } from "../types/app";
 import { persistQueryData, readPersistedQuery } from "../lib/queryPersistence";
 
 const QUERY_STALE_TIME = 5 * 60 * 1000;
@@ -92,8 +95,47 @@ export function useGenerateResume() {
 }
 
 export function useGenerateOutreach() {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: generateOutreach,
+    mutationFn: ({
+      jobId,
+      recruiterLeadId,
+    }: {
+      jobId: string;
+      recruiterLeadId?: string;
+    }) => generateOutreachForLead(jobId, recruiterLeadId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useFindHrLeads() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: findHrLeads,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useUpdateHrLeadState() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      leadId,
+      state,
+    }: {
+      leadId: string;
+      state: RecruiterLeadState;
+    }) => updateHrLeadState(leadId, state),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 

@@ -22,6 +22,23 @@ export type Job = {
 
 export type JobStatus = Job["status"];
 
+export type RecruiterLeadState = "pending" | "action-taken" | "finished";
+
+export type RecruiterLead = {
+  _id: string;
+  jobId: string;
+  name: string;
+  title: string;
+  company: string;
+  category: "hr" | "talent-acquisition" | "hiring-manager" | "referral";
+  profileUrl?: string;
+  searchUrl?: string;
+  searchQuery?: string;
+  hiringSignal?: string;
+  state: RecruiterLeadState;
+  recentPosts: string[];
+};
+
 export type DashboardResponse = {
   tabs: {
     newJobs: Job[];
@@ -30,14 +47,7 @@ export type DashboardResponse = {
     finished: Job[];
     bookmarked: Job[];
   };
-  recruiterLeads: Array<{
-    _id: string;
-    name: string;
-    title: string;
-    company: string;
-    state: "pending" | "action-taken" | "finished";
-    recentPosts: string[];
-  }>;
+  recruiterLeads: RecruiterLead[];
   resumeScore: number;
   skillGapRoadmap: string[];
   interviewQuestions: string[];

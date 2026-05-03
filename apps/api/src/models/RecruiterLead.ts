@@ -6,8 +6,16 @@ const recruiterLeadSchema = new Schema(
     jobId: { type: Types.ObjectId, ref: "Job", required: true },
     name: { type: String, required: true },
     title: { type: String, default: "Recruiter" },
+    category: {
+      type: String,
+      enum: ["hr", "talent-acquisition", "hiring-manager", "referral"],
+      default: "talent-acquisition",
+    },
     company: { type: String, required: true },
     profileUrl: String,
+    searchUrl: String,
+    searchQuery: String,
+    hiringSignal: String,
     recentPosts: { type: [String], default: [] },
     state: {
       type: String,

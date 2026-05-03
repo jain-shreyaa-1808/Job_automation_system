@@ -1,6 +1,12 @@
 import axios from "axios";
 
-import type { DashboardResponse, Job, JobStatus } from "../types/app";
+import type {
+  DashboardResponse,
+  Job,
+  JobStatus,
+  RecruiterLead,
+  RecruiterLeadState,
+} from "../types/app";
 
 function resolveApiBaseUrl() {
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -92,6 +98,37 @@ export async function generateOutreach(jobId: string) {
     referralMessage: string;
   }>("/outreach/generate", { jobId });
   return res.data;
+}
+
+export async function generateOutreachForLead(
+  jobId: string,
+  recruiterLeadId?: string,
+) {
+  const res = await api.post<{
+    email: string;
+    linkedinMessage: string;
+    referralMessage: string;
+  }>("/outreach/generate", {
+    jobId,
+    ...(recruiterLeadId ? { recruiterLeadId } : {}),
+  });
+  return res.data;
+}
+
+export async function findHrLeads(jobId: string) {
+  const res = await api.post<{ leads: RecruiterLead[] }>("/hr/find", { jobId });
+  return res.data;
+}
+
+export async function updateHrLeadState(
+  leadId: string,
+  state: RecruiterLeadState,
+) {
+  const res = await api.patch<{ lead: RecruiterLead }>("/hr/state", {
+    leadId,
+    state,
+  });
+  return res.data.lead;
 }
 
 export async function updateSettings(payload: Record<string, unknown>) {
